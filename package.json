@@ -2,7 +2,7 @@
   "name": "inventario-colegio",
   "version": "0.0.0",
   "private": true,
-  "homepage": "https://aranguiz-tech.github.io/Inventario/",
+  "homepage": "https://aranguiz-tech.github.io/Inventario",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
