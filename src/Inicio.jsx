@@ -1,26 +1,25 @@
 import { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "./firebase-config";
-import TablaInventario from "./TablaInventario";
+import InventarioTable from "./components/InventarioTable";
+
 
 function Inicio({ user, cerrarSesion }) {
   const [depSeleccionado, setDepSeleccionado] = useState(null);
   const [departamentoCargado, setDepartamentoCargado] = useState(false);
-
 
   useEffect(() => {
     const ultimoDepartamento = localStorage.getItem("departamento_activo");
     if (ultimoDepartamento) {
       setDepSeleccionado(ultimoDepartamento);
     }
-    setDepartamentoCargado(true); 
+    setDepartamentoCargado(true);
   }, []);
 
   const cerrar = async () => {
     try {
       await signOut(auth);
       cerrarSesion();
-
     } catch (error) {
       alert("Error al cerrar sesión");
     }
@@ -164,7 +163,7 @@ function Inicio({ user, cerrarSesion }) {
       </button>
 
       {departamentoCargado && depSeleccionado && (
-        <TablaInventario departamento={depSeleccionado} />
+        <InventarioTable departamento={depSeleccionado} />
       )}
     </div>
   );
