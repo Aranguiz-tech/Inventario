@@ -1,7 +1,10 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  base: '/Inventario/', 
   plugins: [react()],
-})
+  build: {
+    outDir: 'docs', 
+  },
+  base: './', 
+});
