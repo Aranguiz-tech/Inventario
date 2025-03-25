@@ -13,6 +13,8 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
   const [wifi, setWifi] = useState([]);
   const [personal, setPersonal] = useState([]);
   const [visible, setVisible] = useState(false);
+  const [mostrarWifi, setMostrarWifi] = useState(false);
+  const [mostrarPersonal, setMostrarPersonal] = useState(false);
 
   const rutaWifi = collection(db, "departamentos", departamento, "wifi");
   const rutaPersonal = collection(db, "departamentos", departamento, "personal");
@@ -32,6 +34,7 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
   const agregarWifi = async () => {
     const docRef = await addDoc(rutaWifi, { nombre: "", clave: "" });
     setWifi([...wifi, { id: docRef.id, nombre: "", clave: "" }]);
+    mostrarAlerta("WiFi agregado");
   };
 
   const actualizarWifi = async (id, campo, valor) => {
@@ -52,6 +55,7 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
   const agregarPersonal = async () => {
     const docRef = await addDoc(rutaPersonal, { nombre: "", correo: "" });
     setPersonal([...personal, { id: docRef.id, nombre: "", correo: "" }]);
+    mostrarAlerta("Personal agregado");
   };
 
   const actualizarPersonal = async (id, campo, valor) => {
@@ -72,7 +76,11 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
   return (
     <>
       <button
-        onClick={() => setVisible(!visible)}
+        onClick={() => {
+          setVisible(true);
+          setMostrarWifi(false);
+          setMostrarPersonal(false);
+        }}
         style={{
           marginLeft: "10px",
           backgroundColor: "#2196f3",
@@ -83,30 +91,96 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
           cursor: "pointer",
         }}
       >
-        {visible ? "Ocultar info" : "Info del Departamento"}
+        Info del Departamento
       </button>
 
       {visible && (
-        <div style={{ marginTop: "1rem", background: "#f0f0f0", padding: "15px", borderRadius: "8px" }}>
-          <h3>WiFi</h3>
-          {wifi.map((w) => (
-            <div key={w.id} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
-              <input placeholder="Nombre" value={w.nombre} onChange={(e) => actualizarWifi(w.id, "nombre", e.target.value)} />
-              <input placeholder="Clave" value={w.clave} onChange={(e) => actualizarWifi(w.id, "clave", e.target.value)} />
-              <button onClick={() => eliminarWifi(w.id)} style={delBtn}>❌</button>
-            </div>
-          ))}
-          <button onClick={agregarWifi} style={{ ...btnStyle, backgroundColor: "gray" }}>+ Agregar WiFi</button>
+        <div style={{
+          position: "fixed",
+          top: "10%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "white",
+          padding: "20px",
+          borderRadius: "10px",
+          boxShadow: "0 0 20px rgba(0,0,0,0.3)",
+          zIndex: 10000,
+          width: "90%",
+          maxWidth: "600px",
+        }}>
+          <h2 style={{ color: "#050576" }}>Información del Departamento</h2>
 
-          <h3 style={{ marginTop: "1rem" }}>Personal</h3>
-          {personal.map((p) => (
-            <div key={p.id} style={{ display: "flex", gap: "10px", marginBottom: "5px" }}>
-              <input placeholder="Nombre" value={p.nombre} onChange={(e) => actualizarPersonal(p.id, "nombre", e.target.value)} />
-              <input placeholder="Correo" value={p.correo} onChange={(e) => actualizarPersonal(p.id, "correo", e.target.value)} />
-              <button onClick={() => eliminarPersonal(p.id)} style={delBtn}>❌</button>
-            </div>
-          ))}
-          <button onClick={agregarPersonal} style={{ ...btnStyle, backgroundColor: "gray" }}>+ Agregar Personal</button>
+          <button onClick={() => setVisible(false)} style={cerrarBtn}>
+            Cerrar ✖
+          </button>
+
+          <div style={{ marginTop: "10px" }}>
+            <button onClick={() => setMostrarWifi((v) => !v)} style={btnStyle}>
+              {mostrarWifi ? "Ocultar WiFi" : "Ver WiFi"}
+            </button>
+            {mostrarWifi && (
+              <>
+                {wifi.map((w) => (
+                  <div key={w.id} style={fila}>
+                    <input
+                      placeholder="Nombre"
+                      value={w.nombre}
+                      onChange={(e) =>
+                        actualizarWifi(w.id, "nombre", e.target.value)
+                      }
+                    />
+                    <input
+                      placeholder="Clave"
+                      value={w.clave}
+                      onChange={(e) =>
+                        actualizarWifi(w.id, "clave", e.target.value)
+                      }
+                    />
+                    <button onClick={() => eliminarWifi(w.id)} style={delBtn}>
+                      ❌
+                    </button>
+                  </div>
+                ))}
+                <button onClick={agregarWifi} style={{ ...btnStyle, backgroundColor: "gray" }}>
+                  + Agregar WiFi
+                </button>
+              </>
+            )}
+          </div>
+
+          <div style={{ marginTop: "20px" }}>
+            <button onClick={() => setMostrarPersonal((v) => !v)} style={btnStyle}>
+              {mostrarPersonal ? "Ocultar Personal" : "Ver Personal"}
+            </button>
+            {mostrarPersonal && (
+              <>
+                {personal.map((p) => (
+                  <div key={p.id} style={fila}>
+                    <input
+                      placeholder="Nombre"
+                      value={p.nombre}
+                      onChange={(e) =>
+                        actualizarPersonal(p.id, "nombre", e.target.value)
+                      }
+                    />
+                    <input
+                      placeholder="Correo"
+                      value={p.correo}
+                      onChange={(e) =>
+                        actualizarPersonal(p.id, "correo", e.target.value)
+                      }
+                    />
+                    <button onClick={() => eliminarPersonal(p.id)} style={delBtn}>
+                      ❌
+                    </button>
+                  </div>
+                ))}
+                <button onClick={agregarPersonal} style={{ ...btnStyle, backgroundColor: "gray" }}>
+                  + Agregar Personal
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
     </>
@@ -120,6 +194,13 @@ const btnStyle = {
   border: "none",
   borderRadius: "5px",
   cursor: "pointer",
+  marginTop: "10px",
+};
+
+const cerrarBtn = {
+  ...btnStyle,
+  backgroundColor: "#f44336",
+  float: "right",
 };
 
 const delBtn = {
@@ -129,6 +210,13 @@ const delBtn = {
   borderRadius: "5px",
   cursor: "pointer",
   padding: "5px 10px",
+};
+
+const fila = {
+  display: "flex",
+  gap: "10px",
+  marginBottom: "8px",
+  alignItems: "center",
 };
 
 export default InfoDepartamento;

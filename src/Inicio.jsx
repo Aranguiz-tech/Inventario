@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "./firebase-config";
 import InventarioTable from "./components/InventarioTable";
-
+import logo from "./assets/logo.png";
 
 function Inicio({ user, cerrarSesion }) {
   const [depSeleccionado, setDepSeleccionado] = useState(null);
@@ -47,7 +47,6 @@ function Inicio({ user, cerrarSesion }) {
       style={{
         display: "flex",
         flexDirection: "column",
-        justifyContent: "center",
         alignItems: "center",
         minHeight: "100dvh",
         width: "100vw",
@@ -55,22 +54,31 @@ function Inicio({ user, cerrarSesion }) {
         position: "relative",
         overflow: "hidden",
         padding: "5vw",
-        maxWidth: "10000px",
-        margin: "0 auto",
         boxSizing: "border-box",
       }}
     >
+<img
+  src={logo}
+  alt="Logo del colegio"
+  style={{
+    position: "absolute", 
+    top: "20px", 
+    right: "20px", 
+    width: "clamp(80px, 10vw, 120px)", 
+    height: "auto",
+    objectFit: "contain",
+    zIndex: 40, 
+  }}
+/>
+
+      {/* Saludo al usuario */}
       <div
         style={{
           position: "absolute",
-          top: "2%",
-          left: "2%",
-          width: "fit-content",
+          top: "20px",
+          left: "20px",
           maxWidth: "180px",
-          zIndex: 10,
           pointerEvents: "none",
-          overflowWrap: "break-word",
-          lineHeight: "1.2",
         }}
       >
         <h4
@@ -78,7 +86,6 @@ function Inicio({ user, cerrarSesion }) {
             margin: 0,
             color: "#050576",
             fontSize: "clamp(1rem, 2vw, 1.2rem)",
-            wordWrap: "break-word",
           }}
         >
           Hola, {user.displayName}
@@ -88,7 +95,7 @@ function Inicio({ user, cerrarSesion }) {
       <h1
         style={{
           color: "#050576",
-          marginTop: "6vh",
+          marginTop: "10vh",
           marginBottom: "5vh",
           textAlign: "center",
           fontSize: "clamp(1.5rem, 5vw, 3rem)",
@@ -99,7 +106,7 @@ function Inicio({ user, cerrarSesion }) {
       >
         ¿A qué departamento quieres ingresar?
       </h1>
-
+     
       <div
         style={{
           display: "flex",
@@ -145,7 +152,7 @@ function Inicio({ user, cerrarSesion }) {
           </button>
         ))}
       </div>
-
+      
       <button
         onClick={cerrar}
         style={{
@@ -161,7 +168,7 @@ function Inicio({ user, cerrarSesion }) {
       >
         Cerrar sesión
       </button>
-
+    
       {departamentoCargado && depSeleccionado && (
         <InventarioTable departamento={depSeleccionado} />
       )}
