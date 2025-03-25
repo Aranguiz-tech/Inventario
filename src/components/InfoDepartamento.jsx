@@ -1,20 +1,17 @@
-import { useEffect, useState } from "react";
+// src/components/InfoDepartamento.jsx
+import { useEffect, useState, useRef } from "react";
 import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
+  collection, getDocs, addDoc, updateDoc, deleteDoc, doc
 } from "firebase/firestore";
 import { db } from "../firebase-config";
 
 function InfoDepartamento({ departamento, mostrarAlerta }) {
+  const [mostrar, setMostrar] = useState(false);
   const [wifi, setWifi] = useState([]);
   const [personal, setPersonal] = useState([]);
-  const [visible, setVisible] = useState(false);
-  const [mostrarWifi, setMostrarWifi] = useState(false);
-  const [mostrarPersonal, setMostrarPersonal] = useState(false);
+  const [verWifi, setVerWifi] = useState(false);
+  const [verPersonal, setVerPersonal] = useState(false);
+  const popupRef = useRef();
 
   const rutaWifi = collection(db, "departamentos", departamento, "wifi");
   const rutaPersonal = collection(db, "departamentos", departamento, "personal");
@@ -28,158 +25,107 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
   };
 
   useEffect(() => {
-    if (visible) cargarDatos();
-  }, [visible]);
+    if (mostrar) cargarDatos();
+  }, [mostrar]);
+
+  const cerrarSiClicFuera = (e) => {
+    if (popupRef.current && !popupRef.current.contains(e.target)) {
+      setMostrar(false);
+    }
+  };
+
+  useEffect(() => {
+    if (mostrar) {
+      document.addEventListener("mousedown", cerrarSiClicFuera);
+    } else {
+      document.removeEventListener("mousedown", cerrarSiClicFuera);
+    }
+    return () => document.removeEventListener("mousedown", cerrarSiClicFuera);
+  }, [mostrar]);
 
   const agregarWifi = async () => {
     const docRef = await addDoc(rutaWifi, { nombre: "", clave: "" });
     setWifi([...wifi, { id: docRef.id, nombre: "", clave: "" }]);
-    mostrarAlerta("WiFi agregado");
   };
 
   const actualizarWifi = async (id, campo, valor) => {
-    const ref = doc(db, "departamentos", departamento, "wifi", id);
-    await updateDoc(ref, { [campo]: valor });
-    setWifi((prev) =>
-      prev.map((w) => (w.id === id ? { ...w, [campo]: valor } : w))
-    );
+    await updateDoc(doc(db, "departamentos", departamento, "wifi", id), { [campo]: valor });
+    setWifi((prev) => prev.map((w) => (w.id === id ? { ...w, [campo]: valor } : w)));
     mostrarAlerta("WiFi actualizado");
   };
 
   const eliminarWifi = async (id) => {
     await deleteDoc(doc(db, "departamentos", departamento, "wifi", id));
-    setWifi(wifi.filter((w) => w.id !== id));
+    setWifi((prev) => prev.filter((w) => w.id !== id));
     mostrarAlerta("WiFi eliminado");
   };
 
   const agregarPersonal = async () => {
     const docRef = await addDoc(rutaPersonal, { nombre: "", correo: "" });
     setPersonal([...personal, { id: docRef.id, nombre: "", correo: "" }]);
-    mostrarAlerta("Personal agregado");
   };
 
   const actualizarPersonal = async (id, campo, valor) => {
-    const ref = doc(db, "departamentos", departamento, "personal", id);
-    await updateDoc(ref, { [campo]: valor });
-    setPersonal((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, [campo]: valor } : p))
-    );
+    await updateDoc(doc(db, "departamentos", departamento, "personal", id), { [campo]: valor });
+    setPersonal((prev) => prev.map((p) => (p.id === id ? { ...p, [campo]: valor } : p)));
     mostrarAlerta("Personal actualizado");
   };
 
   const eliminarPersonal = async (id) => {
     await deleteDoc(doc(db, "departamentos", departamento, "personal", id));
-    setPersonal(personal.filter((p) => p.id !== id));
+    setPersonal((prev) => prev.filter((p) => p.id !== id));
     mostrarAlerta("Personal eliminado");
   };
 
   return (
     <>
       <button
-        onClick={() => {
-          setVisible(true);
-          setMostrarWifi(false);
-          setMostrarPersonal(false);
-        }}
-        style={{
-          marginLeft: "10px",
-          backgroundColor: "#2196f3",
-          color: "white",
-          padding: "8px 15px",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-        }}
+        onClick={() => setMostrar(!mostrar)}
+        style={btnStyleSecundario}
       >
         Info del Departamento
       </button>
 
-      {visible && (
-        <div style={{
-          position: "fixed",
-          top: "10%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: "white",
-          padding: "20px",
-          borderRadius: "10px",
-          boxShadow: "0 0 20px rgba(0,0,0,0.3)",
-          zIndex: 10000,
-          width: "90%",
-          maxWidth: "600px",
-        }}>
-          <h2 style={{ color: "#050576" }}>Información del Departamento</h2>
+      {mostrar && (
+        <div style={fondoModal}>
+          <div ref={popupRef} style={popupContenido}>
+            <h2>Información del Departamento</h2>
 
-          <button onClick={() => setVisible(false)} style={cerrarBtn}>
-            Cerrar ✖
-          </button>
+            <div style={{ marginBottom: "1rem" }}>
+              <button onClick={() => setVerWifi(!verWifi)} style={btnStyleSecundario}>
+                {verWifi ? "Ocultar WiFi" : "Ver WiFi"}
+              </button>
+              {verWifi && (
+                <>
+                  {wifi.map((w) => (
+                    <div key={w.id} style={filaInput}>
+                      <input value={w.nombre} placeholder="Nombre" onChange={(e) => actualizarWifi(w.id, "nombre", e.target.value)} />
+                      <input value={w.clave} placeholder="Clave" onChange={(e) => actualizarWifi(w.id, "clave", e.target.value)} />
+                      <button onClick={() => eliminarWifi(w.id)} style={delBtn}>❌</button>
+                    </div>
+                  ))}
+                  <button onClick={agregarWifi} style={btnStyleSecundario}>+ Agregar WiFi</button>
+                </>
+              )}
+            </div>
 
-          <div style={{ marginTop: "10px" }}>
-            <button onClick={() => setMostrarWifi((v) => !v)} style={btnStyle}>
-              {mostrarWifi ? "Ocultar WiFi" : "Ver WiFi"}
-            </button>
-            {mostrarWifi && (
-              <>
-                {wifi.map((w) => (
-                  <div key={w.id} style={fila}>
-                    <input
-                      placeholder="Nombre"
-                      value={w.nombre}
-                      onChange={(e) =>
-                        actualizarWifi(w.id, "nombre", e.target.value)
-                      }
-                    />
-                    <input
-                      placeholder="Clave"
-                      value={w.clave}
-                      onChange={(e) =>
-                        actualizarWifi(w.id, "clave", e.target.value)
-                      }
-                    />
-                    <button onClick={() => eliminarWifi(w.id)} style={delBtn}>
-                      ❌
-                    </button>
-                  </div>
-                ))}
-                <button onClick={agregarWifi} style={{ ...btnStyle, backgroundColor: "gray" }}>
-                  + Agregar WiFi
-                </button>
-              </>
-            )}
-          </div>
-
-          <div style={{ marginTop: "20px" }}>
-            <button onClick={() => setMostrarPersonal((v) => !v)} style={btnStyle}>
-              {mostrarPersonal ? "Ocultar Personal" : "Ver Personal"}
-            </button>
-            {mostrarPersonal && (
-              <>
-                {personal.map((p) => (
-                  <div key={p.id} style={fila}>
-                    <input
-                      placeholder="Nombre"
-                      value={p.nombre}
-                      onChange={(e) =>
-                        actualizarPersonal(p.id, "nombre", e.target.value)
-                      }
-                    />
-                    <input
-                      placeholder="Correo"
-                      value={p.correo}
-                      onChange={(e) =>
-                        actualizarPersonal(p.id, "correo", e.target.value)
-                      }
-                    />
-                    <button onClick={() => eliminarPersonal(p.id)} style={delBtn}>
-                      ❌
-                    </button>
-                  </div>
-                ))}
-                <button onClick={agregarPersonal} style={{ ...btnStyle, backgroundColor: "gray" }}>
-                  + Agregar Personal
-                </button>
-              </>
-            )}
+            <div>
+              <button onClick={() => setVerPersonal(!verPersonal)} style={btnStyleSecundario}>
+                {verPersonal ? "Ocultar Personal" : "Ver Personal"}
+              </button>
+              {verPersonal && (
+                <>
+                  {personal.map((p) => (
+                    <div key={p.id} style={filaInput}>
+                      <input value={p.nombre} placeholder="Nombre" onChange={(e) => actualizarPersonal(p.id, "nombre", e.target.value)} />
+                      <input value={p.correo} placeholder="Correo" onChange={(e) => actualizarPersonal(p.id, "correo", e.target.value)} />
+                      <button onClick={() => eliminarPersonal(p.id)} style={delBtn}>❌</button>
+                    </div>
+                  ))}
+                  <button onClick={agregarPersonal} style={btnStyleSecundario}>+ Agregar Personal</button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -187,20 +133,14 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
   );
 }
 
-const btnStyle = {
+const btnStyleSecundario = {
   padding: "8px 15px",
-  backgroundColor: "#050576",
+  backgroundColor: "#2196f3",
   color: "white",
   border: "none",
   borderRadius: "5px",
   cursor: "pointer",
-  marginTop: "10px",
-};
-
-const cerrarBtn = {
-  ...btnStyle,
-  backgroundColor: "#f44336",
-  float: "right",
+  marginLeft: "10px",
 };
 
 const delBtn = {
@@ -212,11 +152,34 @@ const delBtn = {
   padding: "5px 10px",
 };
 
-const fila = {
+const filaInput = {
   display: "flex",
   gap: "10px",
-  marginBottom: "8px",
+  marginBottom: "5px",
   alignItems: "center",
+};
+
+const fondoModal = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100vw",
+  height: "100vh",
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 999,
+};
+
+const popupContenido = {
+  backgroundColor: "white",
+  padding: "30px",
+  borderRadius: "10px",
+  maxWidth: "600px",
+  width: "90%",
+  maxHeight: "90vh",
+  overflowY: "auto",
 };
 
 export default InfoDepartamento;
