@@ -1,9 +1,20 @@
 import { useState } from "react";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "./firebase-config";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./components/LanguageSwitcher";
 
 function Login({ InicioDeSesionExitoso }) {
   const [mensaje, setMensaje] = useState("");
+  const { t } = useTranslation();
+
+  const correosAutorizados = [
+    "computacion@wessexschool.cl",
+    "dilan.aranguiz2201@alumnos.ubiobio.cl",
+    "asanhueza@wessexschool.cl",
+    "nmurphy@wessexschool.cl",
+    "fbotasso@wessexschool.cl",
+  ];
 
   const iniciarSesion = async () => {
     const proveedor = new GoogleAuthProvider();
@@ -11,14 +22,14 @@ function Login({ InicioDeSesionExitoso }) {
       const resultado = await signInWithPopup(auth, proveedor);
       const correo = resultado.user.email;
 
-      if (correo === "computacion@wessexschool.cl") {
+      if (correosAutorizados.includes(correo)) {
         setMensaje("");
         InicioDeSesionExitoso(resultado.user);
       } else {
-        setMensaje("Correo no autorizado");
+        setMensaje(t("correoNoAutorizado") || "Correo no autorizado");
       }
     } catch (error) {
-      setMensaje("Error al iniciar sesión. Inténtalo de nuevo.");
+      setMensaje(t("errorInicioSesion") || "Error al iniciar sesión. Inténtalo de nuevo.");
       console.log("Error al iniciar sesión:", error);
     }
   };
@@ -37,8 +48,13 @@ function Login({ InicioDeSesionExitoso }) {
         maxWidth: "10000px",
         margin: "0 auto",
         boxSizing: "border-box",
+        position: "relative",
       }}
     >
+      <div style={{ position: "absolute", top: "20px", right: "20px", zIndex: 50 }}>
+        <LanguageSwitcher />
+      </div>
+
       <h1
         style={{
           color: "#050576",
@@ -46,7 +62,7 @@ function Login({ InicioDeSesionExitoso }) {
           marginBottom: "20px",
         }}
       >
-        Bienvenido al Inventario
+        {t("welcome")}
       </h1>
 
       {mensaje && (
@@ -80,14 +96,14 @@ function Login({ InicioDeSesionExitoso }) {
               cursor: "pointer",
             }}
           >
-            Cerrar
+            {t("cancel")}
           </button>
         </div>
       )}
 
       <div>
         <p style={{ fontSize: "clamp(1rem, 2vw, 1.5rem)", marginBottom: "20px" }}>
-          Por favor, inicia sesión para continuar.
+          {t("loginPrompt")}
         </p>
         <button
           onClick={iniciarSesion}
@@ -104,7 +120,7 @@ function Login({ InicioDeSesionExitoso }) {
           onMouseOver={(e) => (e.target.style.backgroundColor = "#f44336")}
           onMouseOut={(e) => (e.target.style.backgroundColor = "#050576")}
         >
-          Iniciar sesión con Google
+          {t("loginGoogle")}
         </button>
       </div>
     </div>

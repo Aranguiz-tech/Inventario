@@ -10,10 +10,12 @@ import {
 import { db } from "../firebase-config";
 import AlertMessage from "./AlertMessage";
 import InfoDepartamento from "./InfoDepartamento";
+import { useTranslation } from "react-i18next";
 
 function InventarioTable({ departamento }) {
   const [datos, setDatos] = useState([]);
   const [mensaje, setMensaje] = useState("");
+  const { t } = useTranslation();
 
   const ruta = collection(db, "departamentos", departamento, "equipos");
 
@@ -38,14 +40,14 @@ function InventarioTable({ departamento }) {
       tipo: "",
       marca: "",
       complementos: "",
-      estado: "Desconocido",
+      estado: "unknown",
       fecha: new Date().toISOString().split("T")[0],
       cantidad: 1,
       observaciones: "",
     };
     const ref = await addDoc(ruta, nuevo);
     setDatos([...datos, { ...nuevo, id: ref.id }]);
-    mostrarAlerta("Equipo agregado");
+    mostrarAlerta(`${t("addEquipment")} ✅`);
   };
 
   const actualizar = async (id, campo, valor) => {
@@ -59,15 +61,15 @@ function InventarioTable({ departamento }) {
   const eliminar = async (id) => {
     await deleteDoc(doc(db, "departamentos", departamento, "equipos", id));
     setDatos(datos.filter((d) => d.id !== id));
-    mostrarAlerta("Equipo eliminado");
+    mostrarAlerta(`${t("delete")} ✅`);
   };
 
   const getColor = (estado) => {
     switch (estado) {
-      case "Desconocido": return "gray";
-      case "Reemplazar": return "red";
-      case "Mejorar": return "orange";
-      case "Mantener": return "green";
+      case "unknown": return "gray";
+      case "replace": return "red";
+      case "improve": return "orange";
+      case "maintain": return "green";
       default: return "black";
     }
   };
@@ -79,82 +81,141 @@ function InventarioTable({ departamento }) {
     <div style={{ width: "100%", marginTop: "2rem" }}>
       <AlertMessage mensaje={mensaje} />
 
-      <h2 style={{ color: "#050576" }}>{departamento}</h2>
+      <h2 style={{ color: "#050576" }}>{t(`departments.${departamento}`)}</h2>
+
 
       <div style={{ display: "flex", gap: "10px", marginBottom: "1rem" }}>
-        <button onClick={agregar} style={btnStyle}>+ Agregar equipo</button>
+        <button onClick={agregar} style={btnStyle}>
+          + {t("addEquipment")}
+        </button>
         <InfoDepartamento departamento={departamento} mostrarAlerta={mostrarAlerta} />
       </div>
 
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr style={{ backgroundColor: "#e0e0e0" }}>
-            <th>Tipo</th><th>Marca</th><th>Complementos</th><th>Estado</th>
-            <th>Fecha</th><th>Cantidad</th><th>Observaciones</th><th>Eliminar</th>
+            <th>{t("type")}</th>
+            <th>{t("brand")}</th>
+            <th>{t("accessories")}</th>
+            <th>{t("state")}</th>
+            <th>{t("date")}</th>
+            <th>{t("quantity")}</th>
+            <th>{t("notes")}</th>
+            <th>{t("delete")}</th>
           </tr>
         </thead>
         <tbody>
           {datos.map((item) => (
             <tr key={item.id}>
-              <td><input value={item.tipo} onChange={(e) => actualizar(item.id, "tipo", e.target.value)} /></td>
-              <td><input value={item.marca} onChange={(e) => actualizar(item.id, "marca", e.target.value)} /></td>
-              <td><input value={item.complementos} onChange={(e) => actualizar(item.id, "complementos", e.target.value)} /></td>
+              <td>
+                <input
+                  style={inputEstilo}
+                  value={item.tipo}
+                  onChange={(e) => actualizar(item.id, "tipo", e.target.value)}
+                />
+              </td>
+              <td>
+                <input
+                  style={inputEstilo}
+                  value={item.marca}
+                  onChange={(e) => actualizar(item.id, "marca", e.target.value)}
+                />
+              </td>
+              <td>
+                <input
+                  style={inputEstilo}
+                  value={item.complementos}
+                  onChange={(e) => actualizar(item.id, "complementos", e.target.value)}
+                />
+              </td>
               <td>
                 <select
                   value={item.estado}
                   onChange={(e) => actualizar(item.id, "estado", e.target.value)}
-                  style={{ backgroundColor: getColor(item.estado), color: "white" }}
+                  style={{
+                    ...selectEstilo,
+                    backgroundColor: getColor(item.estado),
+                  }}
                 >
-                  <option value="Desconocido">Desconocido</option>
-                  <option value="Reemplazar">Reemplazar</option>
-                  <option value="Mejorar">Mejorar</option>
-                  <option value="Mantener">Mantener</option>
+                  <option value="unknown">{t("unknown")}</option>
+                  <option value="replace">{t("replace")}</option>
+                  <option value="improve">{t("improve")}</option>
+                  <option value="maintain">{t("maintain")}</option>
                 </select>
               </td>
               <td>{item.fecha}</td>
-              <td><input type="number" min="1" value={item.cantidad} onChange={(e) => actualizar(item.id, "cantidad", e.target.value)} /></td>
-              <td><input value={item.observaciones} onChange={(e) => actualizar(item.id, "observaciones", e.target.value)} /></td>
               <td>
-  <button
-    onClick={() => {
-      if (confirm("¿Seguro que deseas eliminar este equipo?")) {
-        eliminar(item.id);
-      }
-    }}
-    style={delBtn}
-  >
-    🗑️
-  </button>
-</td>
-
+                <input
+                  type="number"
+                  min="1"
+                  style={inputEstilo}
+                  value={item.cantidad}
+                  onChange={(e) => actualizar(item.id, "cantidad", e.target.value)}
+                />
+              </td>
+              <td>
+                <input
+                  style={inputEstilo}
+                  value={item.observaciones}
+                  onChange={(e) => actualizar(item.id, "observaciones", e.target.value)}
+                />
+              </td>
+              <td>
+                <button
+                  onClick={() => {
+                    if (confirm(t("deleteConfirmation"))) {
+                      eliminar(item.id);
+                    }
+                  }}
+                  style={delBtn}
+                >
+                  🗑️
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
 
       <p style={{ textAlign: "right", marginTop: "10px", fontWeight: "bold" }}>
-        Total: {calcularTotal()}
+        {t("total")}: {calcularTotal()}
       </p>
     </div>
   );
 }
 
+const inputEstilo = {
+  padding: "10px",
+  fontSize: "1.05rem",
+  borderRadius: "6px",
+  border: "1px solid #ccc",
+  maxWidth: "200px",
+  width: "100%",
+  fontFamily: "Segoe UI, Tahoma, sans-serif",
+  textAlign: "center",
+  boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)",
+  outlineColor: "#050576",
+};
+
+const selectEstilo = {
+  ...inputEstilo,
+  color: "white",
+};
+
 const btnStyle = {
-  padding: "8px 15px",
+  padding: "10px 20px",
+  fontSize: "1rem",
+  border: "none",
+  borderRadius: "6px",
+  cursor: "pointer",
   backgroundColor: "#050576",
   color: "white",
-  border: "none",
-  borderRadius: "5px",
-  cursor: "pointer",
+  fontFamily: "Segoe UI, Tahoma, sans-serif",
 };
 
 const delBtn = {
+  ...btnStyle,
   backgroundColor: "#f44336",
-  color: "white",
-  border: "none",
-  borderRadius: "5px",
-  cursor: "pointer",
-  padding: "5px 10px",
 };
 
 export default InventarioTable;

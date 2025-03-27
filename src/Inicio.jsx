@@ -3,10 +3,13 @@ import { signOut } from "firebase/auth";
 import { auth } from "./firebase-config";
 import InventarioTable from "./components/InventarioTable";
 import logo from "./assets/logo.png";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./components/LanguageSwitcher";
 
 function Inicio({ user, cerrarSesion }) {
   const [depSeleccionado, setDepSeleccionado] = useState(null);
   const [departamentoCargado, setDepartamentoCargado] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const ultimoDepartamento = localStorage.getItem("departamento_activo");
@@ -26,11 +29,13 @@ function Inicio({ user, cerrarSesion }) {
   };
 
   const departamentos = [
-    "Biblioteca",
+    "Materiales",
     "Computación",
+    "Biblioteca",
     "Lenguaje",
     "Ciencias",
     "Matemáticas",
+    "JR",
     "Infant",
     "PE",
     "Inglés",
@@ -57,21 +62,31 @@ function Inicio({ user, cerrarSesion }) {
         boxSizing: "border-box",
       }}
     >
-<img
-  src={logo}
-  alt="Logo del colegio"
-  style={{
-    position: "absolute", 
-    top: "20px", 
-    right: "20px", 
-    width: "clamp(80px, 10vw, 120px)", 
-    height: "auto",
-    objectFit: "contain",
-    zIndex: 40, 
-  }}
-/>
+      <img
+        src={logo}
+        alt="Logo del colegio"
+        style={{
+          position: "absolute",
+          top: "20px",
+          right: "20px",
+          width: "clamp(80px, 10vw, 120px)",
+          height: "auto",
+          objectFit: "contain",
+          zIndex: 40,
+        }}
+      />
 
-      {/* Saludo al usuario */}
+      <div
+        style={{
+          position: "absolute",
+          top: "20px",
+          right: "160px",
+          zIndex: 50,
+        }}
+      >
+        <LanguageSwitcher />
+      </div>
+
       <div
         style={{
           position: "absolute",
@@ -88,7 +103,7 @@ function Inicio({ user, cerrarSesion }) {
             fontSize: "clamp(1rem, 2vw, 1.2rem)",
           }}
         >
-          Hola, {user.displayName}
+          {t("greeting")}, {user.displayName}
         </h4>
       </div>
 
@@ -104,9 +119,9 @@ function Inicio({ user, cerrarSesion }) {
           maxWidth: "90%",
         }}
       >
-        ¿A qué departamento quieres ingresar?
+        {t("departmentQuestion")}
       </h1>
-     
+
       <div
         style={{
           display: "flex",
@@ -148,11 +163,11 @@ function Inicio({ user, cerrarSesion }) {
                 depSeleccionado === departamento ? "#4CAF50" : "#050576";
             }}
           >
-            {departamento}
+            {t(`departments.${departamento}`)}
           </button>
         ))}
       </div>
-      
+
       <button
         onClick={cerrar}
         style={{
@@ -166,9 +181,9 @@ function Inicio({ user, cerrarSesion }) {
           cursor: "pointer",
         }}
       >
-        Cerrar sesión
+        {t("logout")}
       </button>
-    
+
       {departamentoCargado && depSeleccionado && (
         <InventarioTable departamento={depSeleccionado} />
       )}
