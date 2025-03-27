@@ -40,6 +40,7 @@ function Inicio({ user, cerrarSesion }) {
     "PE",
     "Inglés",
     "Administración",
+    "Sala de profesores",
   ];
 
   const seleccionarDepartamento = (departamento) => {
