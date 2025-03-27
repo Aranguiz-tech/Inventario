@@ -2,7 +2,7 @@ import { useState } from "react";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "./firebase-config";
 
-function Login({ onLoginSuccess }) {
+function Login({ InicioDeSesionExitoso }) {
   const [mensaje, setMensaje] = useState("");
 
   const iniciarSesion = async () => {
@@ -13,7 +13,7 @@ function Login({ onLoginSuccess }) {
 
       if (correo === "computacion@wessexschool.cl") {
         setMensaje("");
-        onLoginSuccess(resultado.user);
+        InicioDeSesionExitoso(resultado.user);
       } else {
         setMensaje("Correo no autorizado");
       }

@@ -11,7 +11,7 @@ function App() {
       {usuario ? (
         <Inicio user={usuario} cerrarSesion={() => setUsuario(null)} />
       ) : (
-        <Login onLoginSuccess={(user) => setUsuario(user)} />
+        <Login InicioDeSesionExitoso={(user) => setUsuario(user)} />
       )}
     </div>
   );

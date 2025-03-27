@@ -114,7 +114,19 @@ function InventarioTable({ departamento }) {
               <td>{item.fecha}</td>
               <td><input type="number" min="1" value={item.cantidad} onChange={(e) => actualizar(item.id, "cantidad", e.target.value)} /></td>
               <td><input value={item.observaciones} onChange={(e) => actualizar(item.id, "observaciones", e.target.value)} /></td>
-              <td><button onClick={() => eliminar(item.id)} style={delBtn}>🗑️</button></td>
+              <td>
+  <button
+    onClick={() => {
+      if (confirm("¿Seguro que deseas eliminar este equipo?")) {
+        eliminar(item.id);
+      }
+    }}
+    style={delBtn}
+  >
+    🗑️
+  </button>
+</td>
+
             </tr>
           ))}
         </tbody>

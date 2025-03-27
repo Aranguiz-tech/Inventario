@@ -1,4 +1,3 @@
-// src/components/InfoDepartamento.jsx
 import { useEffect, useState, useRef } from "react";
 import {
   collection, getDocs, addDoc, updateDoc, deleteDoc, doc
@@ -101,7 +100,15 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
                     <div key={w.id} style={filaInput}>
                       <input value={w.nombre} placeholder="Nombre" onChange={(e) => actualizarWifi(w.id, "nombre", e.target.value)} />
                       <input value={w.clave} placeholder="Clave" onChange={(e) => actualizarWifi(w.id, "clave", e.target.value)} />
-                      <button onClick={() => eliminarWifi(w.id)} style={delBtn}>❌</button>
+                      <button
+  onClick={() => {
+    if (confirm("¿Estás seguro de eliminar este WiFi?")) {
+      eliminarWifi(w.id);
+    }
+  }}
+  style={delBtn}
+>❌</button>
+
                     </div>
                   ))}
                   <button onClick={agregarWifi} style={btnStyleSecundario}>+ Agregar WiFi</button>
@@ -119,7 +126,15 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
                     <div key={p.id} style={filaInput}>
                       <input value={p.nombre} placeholder="Nombre" onChange={(e) => actualizarPersonal(p.id, "nombre", e.target.value)} />
                       <input value={p.correo} placeholder="Correo" onChange={(e) => actualizarPersonal(p.id, "correo", e.target.value)} />
-                      <button onClick={() => eliminarPersonal(p.id)} style={delBtn}>❌</button>
+                      <button
+  onClick={() => {
+    if (confirm("¿Estás seguro de eliminar este personal?")) {
+      eliminarPersonal(p.id);
+    }
+  }}
+  style={delBtn}
+>❌</button>
+
                     </div>
                   ))}
                   <button onClick={agregarPersonal} style={btnStyleSecundario}>+ Agregar Personal</button>
