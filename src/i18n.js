@@ -55,7 +55,7 @@ const resources = {
         PE: "Educación Física",
         Inglés: "Inglés",
         Administración: "Administración",
-        Profesores: "Teachers"
+        Profesores: "Profesores"
       }
     }
   },
