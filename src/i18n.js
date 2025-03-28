@@ -54,7 +54,8 @@ const resources = {
         Infant: "Infant",
         PE: "Educación Física",
         Inglés: "Inglés",
-        Administración: "Administración"
+        Administración: "Administración",
+        Profesores: "Teachers"
       }
     }
   },
@@ -110,7 +111,8 @@ const resources = {
         Infant: "Infant",
         PE: "PE",
         Inglés: "English",
-        Administración: "Administration"
+        Administración: "Administration",
+        Profesores: "Teachers"
       }
     }
   }
