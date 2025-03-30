@@ -29,7 +29,6 @@ function Inicio({ user, cerrarSesion }) {
   };
 
   const departamentos = [
-    "Materiales",
     "Computación",
     "Biblioteca",
     "Lenguaje",
