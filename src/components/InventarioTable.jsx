@@ -11,6 +11,7 @@ import { db } from "../firebase-config";
 import InfoDepartamento from "./InfoDepartamento";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
+import ResumenInventario from "./ResumenInventario";
 
 function InventarioTable({ departamento }) {
   const [datos, setDatos] = useState([]);
@@ -40,7 +41,6 @@ function InventarioTable({ departamento }) {
     const nuevo = {
       tipo: "",
       marca: "",
-      complementos: "",
       fecha: new Date().toISOString().split("T")[0],
       observaciones: "",
       estados: { mantener: 0, mejorar: 0, reemplazar: 0 },
@@ -96,16 +96,15 @@ function InventarioTable({ departamento }) {
     return (
       item.tipo.toLowerCase().includes(texto) ||
       item.marca.toLowerCase().includes(texto) ||
-      item.complementos.toLowerCase().includes(texto) ||
       item.observaciones.toLowerCase().includes(texto)
     );
   });
 
   return (
-    <div style={{ width: "100%", marginTop: "2rem" }}>
-      <h2 style={{ color: "#050576" }}>{t(`departments.${departamento}`)}</h2>
+    <div style={{ width: "100%", marginTop: "2rem", overflowX: "auto" }}>
+      <h2 style={{ color: "#050576", textAlign: "center" }}>{t(`departments.${departamento}`)}</h2>
 
-      <div style={{ display: "flex", gap: "10px", marginBottom: "1rem", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: "10px", marginBottom: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
         <button onClick={agregar} style={btnStyle}>+ {t("addEquipment")}</button>
         <InfoDepartamento departamento={departamento} mostrarAlerta={toast.success} />
         <input
@@ -117,87 +116,61 @@ function InventarioTable({ departamento }) {
         />
       </div>
 
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ backgroundColor: "#e0e0e0" }}>
-            <th>{t("type")}</th>
-            <th>{t("brand")}</th>
-            <th>{t("accessories")}</th>
-            <th>{t("date")}</th>
-            <th>{t("maintain")}</th>
-            <th>{t("improve")}</th>
-            <th>{t("replace")}</th>
-            <th>{t("notes")}</th>
-            <th>{t("delete")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtrados.map((item) => (
-            <tr key={item.id}>
-              <td>
-                <input style={inputEstilo} value={item.tipo} onChange={(e) => actualizar(item.id, "tipo", e.target.value)} />
-              </td>
-              <td>
-                <input style={inputEstilo} value={item.marca} onChange={(e) => actualizar(item.id, "marca", e.target.value)} />
-              </td>
-              <td>
-                <input style={inputEstilo} value={item.complementos} onChange={(e) => actualizar(item.id, "complementos", e.target.value)} />
-              </td>
-              <td>{item.fecha}</td>
-              <td>
-                <input
-                  type="number"
-                  min="0"
-                  style={{ ...inputEstilo, backgroundColor: getBgColor("mantener"), color: "white", fontSize: "1.2rem", fontWeight: "bold" }}
-                  value={item.estados.mantener}
-                  onChange={(e) => actualizarEstado(item.id, "mantener", e.target.value)}
-                />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  min="0"
-                  style={{ ...inputEstilo, backgroundColor: getBgColor("mejorar"), color: "white", fontSize: "1.2rem", fontWeight: "bold" }}
-                  value={item.estados.mejorar}
-                  onChange={(e) => actualizarEstado(item.id, "mejorar", e.target.value)}
-                />
-              </td>
-              <td>
-                <input
-                  type="number"
-                  min="0"
-                  style={{ ...inputEstilo, backgroundColor: getBgColor("reemplazar"), color: "white", fontSize: "1.2rem", fontWeight: "bold" }}
-                  value={item.estados.reemplazar}
-                  onChange={(e) => actualizarEstado(item.id, "reemplazar", e.target.value)}
-                />
-              </td>
-              <td>
-                <input style={inputEstilo} value={item.observaciones} onChange={(e) => actualizar(item.id, "observaciones", e.target.value)} />
-              </td>
-              <td>
-                <button
-                  onClick={() => confirm(t("deleteConfirmation")) && eliminar(item.id)}
-                  style={delBtn}
-                >🗑️</button>
-              </td>
+      {/* Agregado id para que html2canvas lo capture */}
+      <div id="tabla-inventario" className="tabla-inventario" style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ backgroundColor: "#e0e0e0" }}>
+              <th>{t("type")}</th>
+              <th>{t("brand")}</th>
+              <th>{t("date")}</th>
+              <th>{t("maintain")}</th>
+              <th>{t("improve")}</th>
+              <th>{t("replace")}</th>
+              <th>{t("notes")}</th>
+              <th>{t("quantity")}</th>
+              <th>{t("delete")}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filtrados.map((item) => {
+              const cantidad =
+                (parseInt(item.estados.mantener) || 0) +
+                (parseInt(item.estados.mejorar) || 0) +
+                (parseInt(item.estados.reemplazar) || 0);
+              return (
+                <tr key={item.id}>
+                  <td><input style={inputEstilo} value={item.tipo} onChange={(e) => actualizar(item.id, "tipo", e.target.value)} /></td>
+                  <td><input style={inputEstilo} value={item.marca} onChange={(e) => actualizar(item.id, "marca", e.target.value)} /></td>
+                  <td>{item.fecha}</td>
+                  <td><input type="number" min="0" style={{ ...inputEstilo, backgroundColor: getBgColor("mantener"), color: "white", fontSize: "1.1rem", fontWeight: "bold" }} value={item.estados.mantener} onChange={(e) => actualizarEstado(item.id, "mantener", e.target.value)} /></td>
+                  <td><input type="number" min="0" style={{ ...inputEstilo, backgroundColor: getBgColor("mejorar"), color: "white", fontSize: "1.1rem", fontWeight: "bold" }} value={item.estados.mejorar} onChange={(e) => actualizarEstado(item.id, "mejorar", e.target.value)} /></td>
+                  <td><input type="number" min="0" style={{ ...inputEstilo, backgroundColor: getBgColor("reemplazar"), color: "white", fontSize: "1.1rem", fontWeight: "bold" }} value={item.estados.reemplazar} onChange={(e) => actualizarEstado(item.id, "reemplazar", e.target.value)} /></td>
+                  <td><input style={inputEstilo} value={item.observaciones} onChange={(e) => actualizar(item.id, "observaciones", e.target.value)} /></td>
+                  <td style={{ textAlign: "center", fontWeight: "bold" }}>{cantidad}</td>
+                  <td><button onClick={() => confirm(t("deleteConfirmation")) && eliminar(item.id)} style={delBtn}>🗑️</button></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
       <p style={{ textAlign: "right", marginTop: "10px", fontWeight: "bold" }}>
         {t("total")}: {calcularTotal()}
       </p>
+
+      <ResumenInventario datos={datos} />
     </div>
   );
 }
 
 const inputEstilo = {
   padding: "10px",
-  fontSize: "1.1rem",
+  fontSize: "1.05rem",
   borderRadius: "6px",
   border: "1px solid #ccc",
-  maxWidth: "200px",
+  maxWidth: "180px",
   width: "100%",
   fontFamily: "Segoe UI, Tahoma, sans-serif",
   textAlign: "center",
