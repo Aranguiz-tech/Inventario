@@ -8,20 +8,26 @@ import {
   doc,
 } from "firebase/firestore";
 import { db } from "../firebase-config";
-import AlertMessage from "./AlertMessage";
 import InfoDepartamento from "./InfoDepartamento";
 import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
 
 function InventarioTable({ departamento }) {
   const [datos, setDatos] = useState([]);
-  const [mensaje, setMensaje] = useState("");
+  const [filtro, setFiltro] = useState("");
   const { t } = useTranslation();
 
   const ruta = collection(db, "departamentos", departamento, "equipos");
 
   const cargarDatos = async () => {
     const consulta = await getDocs(ruta);
-    setDatos(consulta.docs.map((d) => ({ ...d.data(), id: d.id })));
+    setDatos(
+      consulta.docs.map((d) => ({
+        ...d.data(),
+        id: d.id,
+        estados: d.data().estados || { mantener: 0, mejorar: 0, reemplazar: 0 },
+      }))
+    );
   };
 
   useEffect(() => {
@@ -30,65 +36,85 @@ function InventarioTable({ departamento }) {
     }
   }, [departamento]);
 
-  const mostrarAlerta = (msg) => {
-    setMensaje(msg);
-    setTimeout(() => setMensaje(""), 3000);
-  };
-
   const agregar = async () => {
     const nuevo = {
       tipo: "",
       marca: "",
       complementos: "",
-      estado: "unknown",
       fecha: new Date().toISOString().split("T")[0],
-      cantidad: 1,
       observaciones: "",
+      estados: { mantener: 0, mejorar: 0, reemplazar: 0 },
     };
     const ref = await addDoc(ruta, nuevo);
     setDatos([...datos, { ...nuevo, id: ref.id }]);
-    mostrarAlerta(`${t("addEquipment")} ✅`);
+    toast.success(`${t("addEquipment")} ✅`);
   };
 
   const actualizar = async (id, campo, valor) => {
     const ref = doc(db, "departamentos", departamento, "equipos", id);
-    await updateDoc(ref, { [campo]: campo === "cantidad" ? parseInt(valor, 10) : valor });
+    await updateDoc(ref, { [campo]: valor });
+    setDatos((prev) => prev.map((d) => (d.id === id ? { ...d, [campo]: valor } : d)));
+  };
+
+  const actualizarEstado = async (id, estado, valor) => {
+    const ref = doc(db, "departamentos", departamento, "equipos", id);
+    const nuevo = {
+      ...datos.find((d) => d.id === id).estados,
+      [estado]: parseInt(valor, 10) || 0,
+    };
+    await updateDoc(ref, { estados: nuevo });
     setDatos((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, [campo]: valor } : d))
+      prev.map((d) => (d.id === id ? { ...d, estados: nuevo } : d))
     );
   };
 
   const eliminar = async (id) => {
     await deleteDoc(doc(db, "departamentos", departamento, "equipos", id));
     setDatos(datos.filter((d) => d.id !== id));
-    mostrarAlerta(`${t("delete")} ✅`);
-  };
-
-  const getColor = (estado) => {
-    switch (estado) {
-      case "unknown": return "gray";
-      case "replace": return "red";
-      case "improve": return "orange";
-      case "maintain": return "green";
-      default: return "black";
-    }
+    toast.success(`${t("delete")} ✅`);
   };
 
   const calcularTotal = () =>
-    datos.reduce((suma, item) => suma + (parseInt(item.cantidad, 10) || 0), 0);
+    datos.reduce(
+      (suma, item) =>
+        suma +
+        Object.values(item.estados || {}).reduce((a, b) => a + (parseInt(b) || 0), 0),
+      0
+    );
+
+  const getBgColor = (estado) => {
+    switch (estado) {
+      case "mantener": return "#4CAF50";
+      case "mejorar": return "#FF9800";
+      case "reemplazar": return "#F44336";
+      default: return "white";
+    }
+  };
+
+  const filtrados = datos.filter(item => {
+    const texto = filtro.toLowerCase();
+    return (
+      item.tipo.toLowerCase().includes(texto) ||
+      item.marca.toLowerCase().includes(texto) ||
+      item.complementos.toLowerCase().includes(texto) ||
+      item.observaciones.toLowerCase().includes(texto)
+    );
+  });
 
   return (
     <div style={{ width: "100%", marginTop: "2rem" }}>
-      <AlertMessage mensaje={mensaje} />
-
       <h2 style={{ color: "#050576" }}>{t(`departments.${departamento}`)}</h2>
 
-
-      <div style={{ display: "flex", gap: "10px", marginBottom: "1rem" }}>
-        <button onClick={agregar} style={btnStyle}>
-          + {t("addEquipment")}
-        </button>
-        <InfoDepartamento departamento={departamento} mostrarAlerta={mostrarAlerta} />
+      <div style={{ display: "flex", gap: "10px", marginBottom: "1rem", flexWrap: "wrap" }}>
+        <button onClick={agregar} style={btnStyle}>+ {t("addEquipment")}</button>
+        <InfoDepartamento departamento={departamento} mostrarAlerta={toast.success} />
+        <input
+          type="text"
+          placeholder={t("search")}
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          style={{ ...inputEstilo, minWidth: "250px" }}
+        />
       </div>
 
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -97,80 +123,62 @@ function InventarioTable({ departamento }) {
             <th>{t("type")}</th>
             <th>{t("brand")}</th>
             <th>{t("accessories")}</th>
-            <th>{t("state")}</th>
             <th>{t("date")}</th>
-            <th>{t("quantity")}</th>
+            <th>{t("maintain")}</th>
+            <th>{t("improve")}</th>
+            <th>{t("replace")}</th>
             <th>{t("notes")}</th>
             <th>{t("delete")}</th>
           </tr>
         </thead>
         <tbody>
-          {datos.map((item) => (
+          {filtrados.map((item) => (
             <tr key={item.id}>
               <td>
-                <input
-                  style={inputEstilo}
-                  value={item.tipo}
-                  onChange={(e) => actualizar(item.id, "tipo", e.target.value)}
-                />
+                <input style={inputEstilo} value={item.tipo} onChange={(e) => actualizar(item.id, "tipo", e.target.value)} />
               </td>
               <td>
-                <input
-                  style={inputEstilo}
-                  value={item.marca}
-                  onChange={(e) => actualizar(item.id, "marca", e.target.value)}
-                />
+                <input style={inputEstilo} value={item.marca} onChange={(e) => actualizar(item.id, "marca", e.target.value)} />
               </td>
               <td>
-                <input
-                  style={inputEstilo}
-                  value={item.complementos}
-                  onChange={(e) => actualizar(item.id, "complementos", e.target.value)}
-                />
-              </td>
-              <td>
-                <select
-                  value={item.estado}
-                  onChange={(e) => actualizar(item.id, "estado", e.target.value)}
-                  style={{
-                    ...selectEstilo,
-                    backgroundColor: getColor(item.estado),
-                  }}
-                >
-                  <option value="unknown">{t("unknown")}</option>
-                  <option value="replace">{t("replace")}</option>
-                  <option value="improve">{t("improve")}</option>
-                  <option value="maintain">{t("maintain")}</option>
-                </select>
+                <input style={inputEstilo} value={item.complementos} onChange={(e) => actualizar(item.id, "complementos", e.target.value)} />
               </td>
               <td>{item.fecha}</td>
               <td>
                 <input
                   type="number"
-                  min="1"
-                  style={inputEstilo}
-                  value={item.cantidad}
-                  onChange={(e) => actualizar(item.id, "cantidad", e.target.value)}
+                  min="0"
+                  style={{ ...inputEstilo, backgroundColor: getBgColor("mantener"), color: "white", fontSize: "1.2rem", fontWeight: "bold" }}
+                  value={item.estados.mantener}
+                  onChange={(e) => actualizarEstado(item.id, "mantener", e.target.value)}
                 />
               </td>
               <td>
                 <input
-                  style={inputEstilo}
-                  value={item.observaciones}
-                  onChange={(e) => actualizar(item.id, "observaciones", e.target.value)}
+                  type="number"
+                  min="0"
+                  style={{ ...inputEstilo, backgroundColor: getBgColor("mejorar"), color: "white", fontSize: "1.2rem", fontWeight: "bold" }}
+                  value={item.estados.mejorar}
+                  onChange={(e) => actualizarEstado(item.id, "mejorar", e.target.value)}
                 />
               </td>
               <td>
+                <input
+                  type="number"
+                  min="0"
+                  style={{ ...inputEstilo, backgroundColor: getBgColor("reemplazar"), color: "white", fontSize: "1.2rem", fontWeight: "bold" }}
+                  value={item.estados.reemplazar}
+                  onChange={(e) => actualizarEstado(item.id, "reemplazar", e.target.value)}
+                />
+              </td>
+              <td>
+                <input style={inputEstilo} value={item.observaciones} onChange={(e) => actualizar(item.id, "observaciones", e.target.value)} />
+              </td>
+              <td>
                 <button
-                  onClick={() => {
-                    if (confirm(t("deleteConfirmation"))) {
-                      eliminar(item.id);
-                    }
-                  }}
+                  onClick={() => confirm(t("deleteConfirmation")) && eliminar(item.id)}
                   style={delBtn}
-                >
-                  🗑️
-                </button>
+                >🗑️</button>
               </td>
             </tr>
           ))}
@@ -186,7 +194,7 @@ function InventarioTable({ departamento }) {
 
 const inputEstilo = {
   padding: "10px",
-  fontSize: "1.05rem",
+  fontSize: "1.1rem",
   borderRadius: "6px",
   border: "1px solid #ccc",
   maxWidth: "200px",
@@ -195,11 +203,6 @@ const inputEstilo = {
   textAlign: "center",
   boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)",
   outlineColor: "#050576",
-};
-
-const selectEstilo = {
-  ...inputEstilo,
-  color: "white",
 };
 
 const btnStyle = {

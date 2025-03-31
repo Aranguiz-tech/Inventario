@@ -1,13 +1,18 @@
 import { useEffect, useState, useRef } from "react";
 import {
-  collection, getDocs, addDoc, updateDoc, deleteDoc, doc
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
 } from "firebase/firestore";
 import { db } from "../firebase-config";
 import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
 
-function InfoDepartamento({ departamento, mostrarAlerta }) {
+function InfoDepartamento({ departamento }) {
   const { t } = useTranslation();
-
   const [mostrar, setMostrar] = useState(false);
   const [wifi, setWifi] = useState([]);
   const [personal, setPersonal] = useState([]);
@@ -53,13 +58,13 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
   const actualizarWifi = async (id, campo, valor) => {
     await updateDoc(doc(db, "departamentos", departamento, "wifi", id), { [campo]: valor });
     setWifi((prev) => prev.map((w) => (w.id === id ? { ...w, [campo]: valor } : w)));
-    mostrarAlerta("WiFi actualizado");
+    toast.success("WiFi actualizado");
   };
 
   const eliminarWifi = async (id) => {
     await deleteDoc(doc(db, "departamentos", departamento, "wifi", id));
     setWifi((prev) => prev.filter((w) => w.id !== id));
-    mostrarAlerta("WiFi eliminado");
+    toast.success("WiFi eliminado");
   };
 
   const agregarPersonal = async () => {
@@ -70,22 +75,20 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
   const actualizarPersonal = async (id, campo, valor) => {
     await updateDoc(doc(db, "departamentos", departamento, "personal", id), { [campo]: valor });
     setPersonal((prev) => prev.map((p) => (p.id === id ? { ...p, [campo]: valor } : p)));
-    mostrarAlerta("Personal actualizado");
+    toast.success("Personal actualizado");
   };
 
   const eliminarPersonal = async (id) => {
     await deleteDoc(doc(db, "departamentos", departamento, "personal", id));
     setPersonal((prev) => prev.filter((p) => p.id !== id));
-    mostrarAlerta("Personal eliminado");
+    toast.success("Personal eliminado");
   };
 
   return (
     <>
       <button
-        onClick={() => setMostrar(!mostrar)}
-        style={{ ...btnStyleSecundario, transition: "all 0.3s ease" }}
-        onMouseOver={(e) => (e.target.style.backgroundColor = "#1976d2")}
-        onMouseOut={(e) => (e.target.style.backgroundColor = "#2196f3")}
+        onClick={() => setMostrar(true)}
+        style={botonPrincipal}
       >
         {t("departmentInfo")}
       </button>
@@ -93,16 +96,19 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
       {mostrar && (
         <div style={fondoModal}>
           <div ref={popupRef} style={popupContenido}>
-            <h2>{t("departmentInfo")}</h2>
-
-            {/* --- WiFi --- */}
-            <div style={{ marginBottom: "1rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h2 style={{ marginBottom: "1rem" }}>{t("departmentInfo")}</h2>
               <button
-                onClick={() => setVerWifi(!verWifi)}
-                style={{ ...btnStyleSecundario, transition: "all 0.3s ease" }}
-                onMouseOver={(e) => (e.target.style.backgroundColor = "#1976d2")}
-                onMouseOut={(e) => (e.target.style.backgroundColor = "#2196f3")}
+                onClick={() => setMostrar(false)}
+                style={{ background: "transparent", border: "none", fontSize: "1.5rem", cursor: "pointer", color: "#888" }}
+                title={t("close")}
               >
+                ❌
+              </button>
+            </div>
+
+            <div style={{ marginBottom: "1.5rem" }}>
+              <button onClick={() => setVerWifi(!verWifi)} style={botonSecundario}>
                 {verWifi ? t("hideWifi") : t("showWifi")}
               </button>
               {verWifi && (
@@ -111,31 +117,16 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
                     <div key={w.id} style={filaInput}>
                       <input style={inputEstilo} value={w.nombre} placeholder={t("name")} onChange={(e) => actualizarWifi(w.id, "nombre", e.target.value)} />
                       <input style={inputEstilo} value={w.clave} placeholder={t("password")} onChange={(e) => actualizarWifi(w.id, "clave", e.target.value)} />
-                      <button
-                        onClick={() => {
-                          if (confirm(t("deleteWifiConfirmation"))) {
-                            eliminarWifi(w.id);
-                          }
-                        }}
-                        style={delBtn}
-                      >❌</button>
+                      <button onClick={() => eliminarWifi(w.id)} style={delBtn}>❌</button>
                     </div>
                   ))}
-                  <button onClick={agregarWifi} style={btnStyleSecundario}>
-                    {t("addWifi")}
-                  </button>
+                  <button onClick={agregarWifi} style={botonSecundario}>{t("addWifi")}</button>
                 </>
               )}
             </div>
 
-            {/* --- Personal --- */}
             <div>
-              <button
-                onClick={() => setVerPersonal(!verPersonal)}
-                style={{ ...btnStyleSecundario, transition: "all 0.3s ease" }}
-                onMouseOver={(e) => (e.target.style.backgroundColor = "#1976d2")}
-                onMouseOut={(e) => (e.target.style.backgroundColor = "#2196f3")}
-              >
+              <button onClick={() => setVerPersonal(!verPersonal)} style={botonSecundario}>
                 {verPersonal ? t("hideStaff") : t("showStaff")}
               </button>
               {verPersonal && (
@@ -145,19 +136,10 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
                       <input style={inputEstilo} value={p.nombre} placeholder={t("name")} onChange={(e) => actualizarPersonal(p.id, "nombre", e.target.value)} />
                       <input style={inputEstilo} value={p.correo} placeholder={t("email")} onChange={(e) => actualizarPersonal(p.id, "correo", e.target.value)} />
                       <input style={inputEstilo} value={p.cargo} placeholder={t("role")} onChange={(e) => actualizarPersonal(p.id, "cargo", e.target.value)} />
-                      <button
-                        onClick={() => {
-                          if (confirm(t("deleteStaffConfirmation"))) {
-                            eliminarPersonal(p.id);
-                          }
-                        }}
-                        style={delBtn}
-                      >❌</button>
+                      <button onClick={() => eliminarPersonal(p.id)} style={delBtn}>❌</button>
                     </div>
                   ))}
-                  <button onClick={agregarPersonal} style={btnStyleSecundario}>
-                    {t("addStaff")}
-                  </button>
+                  <button onClick={agregarPersonal} style={botonSecundario}>{t("addStaff")}</button>
                 </>
               )}
             </div>
@@ -168,15 +150,20 @@ function InfoDepartamento({ departamento, mostrarAlerta }) {
   );
 }
 
-const btnStyleSecundario = {
+const botonPrincipal = {
   padding: "10px 20px",
   backgroundColor: "#2196f3",
   color: "white",
   border: "none",
   borderRadius: "6px",
   cursor: "pointer",
-  marginLeft: "10px",
-  fontFamily: "Segoe UI, Tahoma, sans-serif",
+  fontWeight: "bold",
+};
+
+const botonSecundario = {
+  ...botonPrincipal,
+  backgroundColor: "#050576",
+  marginTop: "10px",
 };
 
 const delBtn = {
@@ -186,14 +173,12 @@ const delBtn = {
   borderRadius: "6px",
   cursor: "pointer",
   padding: "6px 12px",
-  fontFamily: "Segoe UI, Tahoma, sans-serif",
 };
 
 const filaInput = {
   display: "flex",
   gap: "10px",
-  marginBottom: "5px",
-  alignItems: "center",
+  marginBottom: "10px",
   flexWrap: "wrap",
 };
 
@@ -203,9 +188,6 @@ const inputEstilo = {
   borderRadius: "6px",
   border: "1px solid #ccc",
   fontFamily: "Segoe UI, Tahoma, sans-serif",
-  textAlign: "center",
-  boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)",
-  outlineColor: "#2196f3",
   width: "100%",
   maxWidth: "200px",
 };
@@ -220,18 +202,17 @@ const fondoModal = {
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  zIndex: 999,
+  zIndex: 1000,
 };
 
 const popupContenido = {
   backgroundColor: "white",
   padding: "30px",
   borderRadius: "10px",
-  maxWidth: "600px",
-  width: "90%",
+  width: "95%",
+  maxWidth: "700px",
   maxHeight: "90vh",
   overflowY: "auto",
-  fontFamily: "Segoe UI, Tahoma, sans-serif",
 };
 
 export default InfoDepartamento;

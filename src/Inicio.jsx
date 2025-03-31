@@ -36,7 +36,7 @@ function Inicio({ user, cerrarSesion }) {
     "Matemáticas",
     "JR",
     "Infant",
-    "PE",
+    "EducaciónFísica",
     "Inglés",
     "Administración",
     "Profesores",
@@ -55,68 +55,69 @@ function Inicio({ user, cerrarSesion }) {
         alignItems: "center",
         minHeight: "100dvh",
         width: "100vw",
-        backgroundColor: "white",
+        backgroundColor: "#f9f9f9",
         position: "relative",
-        overflow: "hidden",
-        padding: "5vw",
+        overflowX: "hidden",
+        padding: "3vw",
         boxSizing: "border-box",
       }}
     >
-      <img
-        src={logo}
-        alt="Logo del colegio"
-        style={{
-          position: "absolute",
-          top: "20px",
-          right: "20px",
-          width: "clamp(80px, 10vw, 120px)",
-          height: "auto",
-          objectFit: "contain",
-          zIndex: 40,
-        }}
-      />
-
       <div
         style={{
-          position: "absolute",
-          top: "20px",
-          right: "160px",
-          zIndex: 50,
+          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "3vh",
         }}
       >
-        <LanguageSwitcher />
-      </div>
-
-      <div
-        style={{
-          position: "absolute",
-          top: "20px",
-          left: "20px",
-          maxWidth: "180px",
-          pointerEvents: "none",
-        }}
-      >
-        <h4
+        <img
+          src={logo}
+          alt="Logo del colegio"
           style={{
-            margin: 0,
-            color: "#050576",
-            fontSize: "clamp(1rem, 2vw, 1.2rem)",
+            width: "clamp(120px, 15vw, 200px)",
+            height: "auto",
+            objectFit: "contain",
           }}
-        >
-          {t("greeting")}, {user.displayName}
-        </h4>
+        />
+
+        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          <h4
+            style={{
+              margin: 0,
+              color: "#050576",
+              fontSize: "clamp(1rem, 2vw, 1.2rem)",
+              fontWeight: "500",
+            }}
+          >
+            {t("greeting")}, {user.displayName}
+          </h4>
+
+          <LanguageSwitcher />
+
+          <button
+            onClick={cerrar}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#f44336",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              fontSize: "clamp(1rem, 2vw, 1.2rem)",
+              cursor: "pointer",
+            }}
+          >
+            {t("logout")}
+          </button>
+        </div>
       </div>
 
       <h1
         style={{
           color: "#050576",
-          marginTop: "10vh",
-          marginBottom: "5vh",
+          marginBottom: "4vh",
           textAlign: "center",
-          fontSize: "clamp(1.5rem, 5vw, 3rem)",
-          lineHeight: "1.2",
-          wordWrap: "break-word",
-          maxWidth: "90%",
+          fontSize: "clamp(1.5rem, 5vw, 2.5rem)",
         }}
       >
         {t("departmentQuestion")}
@@ -126,10 +127,11 @@ function Inicio({ user, cerrarSesion }) {
         style={{
           display: "flex",
           flexWrap: "wrap",
-          gap: "2vw",
+          gap: "1rem",
           justifyContent: "center",
           width: "100%",
-          maxWidth: "800px",
+          maxWidth: "1100px",
+          marginBottom: "5vh",
         }}
       >
         {departamentos.map((departamento) => (
@@ -138,7 +140,7 @@ function Inicio({ user, cerrarSesion }) {
             onClick={() => seleccionarDepartamento(departamento)}
             style={{
               flex: "1 1 150px",
-              maxWidth: "200px",
+              maxWidth: "180px",
               padding: "clamp(10px, 2vw, 15px) clamp(20px, 4vw, 30px)",
               backgroundColor:
                 depSeleccionado === departamento ? "#4CAF50" : "#050576",
@@ -167,22 +169,6 @@ function Inicio({ user, cerrarSesion }) {
           </button>
         ))}
       </div>
-
-      <button
-        onClick={cerrar}
-        style={{
-          marginTop: "5vh",
-          padding: "clamp(10px, 2vw, 15px) clamp(20px, 4vw, 30px)",
-          backgroundColor: "#f44336",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          fontSize: "clamp(1rem, 2vw, 1.2rem)",
-          cursor: "pointer",
-        }}
-      >
-        {t("logout")}
-      </button>
 
       {departamentoCargado && depSeleccionado && (
         <InventarioTable departamento={depSeleccionado} />

@@ -43,6 +43,7 @@ const resources = {
       greeting: "Hola",
       correoNoAutorizado: "Correo no autorizado",
       errorInicioSesion: "Error al iniciar sesión. Inténtalo de nuevo.",
+      search: "Buscar...",
       departments: {
         Materiales: "Materiales",
         Computación: "Computación",
@@ -52,7 +53,8 @@ const resources = {
         Matemáticas: "Matemáticas",
         JR: "JR",
         Infant: "Infant",
-        PE: "Educación Física",
+        PE: "PE",
+        EducaciónFísica: "Educación Física",
         Inglés: "Inglés",
         Administración: "Administración",
         Profesores: "Profesores"
@@ -100,6 +102,7 @@ const resources = {
       greeting: "Hello",
       correoNoAutorizado: "Unauthorised email",
       errorInicioSesion: "Failed to sign in. Please try again.",
+      search: "Search...",
       departments: {
         Materiales: "Supplies",
         Computación: "Computing",
@@ -110,6 +113,7 @@ const resources = {
         JR: "JR",
         Infant: "Infant",
         PE: "PE",
+        EducaciónFísica: "Physical Education",
         Inglés: "English",
         Administración: "Administration",
         Profesores: "Teachers"

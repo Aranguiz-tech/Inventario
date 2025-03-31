@@ -7,10 +7,24 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node
 node_modules
-dist
-dist-ssr
+
+# Builds
+dist/
+dist-ssr/
+dist/assets/index-Bb8d50Y3.js
+
+# Env & Local Configs
+.env
 *.local
+
+# Firebase
+.firebase/
+.firebaserc
+
+# Vite cache
+.vite/
 
 # Editor directories and files
 .vscode/*
@@ -22,5 +36,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env
-dist/assets/index-Bb8d50Y3.js
+
+# System
+Thumbs.db
+\assets\index-D32ZtCiT.js
+*\dist\assets\index-D32ZtCiT.js
