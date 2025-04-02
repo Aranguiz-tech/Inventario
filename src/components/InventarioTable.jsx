@@ -10,12 +10,14 @@ import {
 import { db } from "../firebase-config";
 import InfoDepartamento from "./InfoDepartamento";
 import { useTranslation } from "react-i18next";
-import toast from "react-hot-toast";
+import FullScreenNotification from "./FullScreenNotification";
 import ResumenInventario from "./ResumenInventario";
 
 function InventarioTable({ departamento }) {
   const [datos, setDatos] = useState([]);
   const [filtro, setFiltro] = useState("");
+  const [notificacion, setNotificacion] = useState(null);
+  const [confirmarEliminacion, setConfirmarEliminacion] = useState(null);
   const { t } = useTranslation();
 
   const ruta = collection(db, "departamentos", departamento, "equipos");
@@ -26,7 +28,8 @@ function InventarioTable({ departamento }) {
       consulta.docs.map((d) => ({
         ...d.data(),
         id: d.id,
-        estados: d.data().estados || { mantener: 0, mejorar: 0, reemplazar: 0 },
+        editado: false,
+        estados: d.data().estados || { mantener: "", mejorar: "", reemplazar: "" },
       }))
     );
   };
@@ -43,35 +46,69 @@ function InventarioTable({ departamento }) {
       marca: "",
       fecha: new Date().toISOString().split("T")[0],
       observaciones: "",
-      estados: { mantener: 0, mejorar: 0, reemplazar: 0 },
+      estados: { mantener: "", mejorar: "", reemplazar: "" },
     };
     const ref = await addDoc(ruta, nuevo);
     setDatos([...datos, { ...nuevo, id: ref.id }]);
-    toast.success(`${t("addEquipment")} ✅`);
+    mostrarNotificacion(`${t("addEquipment")} ✅`);
   };
 
-  const actualizar = async (id, campo, valor) => {
-    const ref = doc(db, "departamentos", departamento, "equipos", id);
-    await updateDoc(ref, { [campo]: valor });
-    setDatos((prev) => prev.map((d) => (d.id === id ? { ...d, [campo]: valor } : d)));
+  const mostrarNotificacion = (mensaje) => {
+    setNotificacion(mensaje);
+    setTimeout(() => setNotificacion(null), 2000);
   };
 
-  const actualizarEstado = async (id, estado, valor) => {
-    const ref = doc(db, "departamentos", departamento, "equipos", id);
-    const nuevo = {
-      ...datos.find((d) => d.id === id).estados,
-      [estado]: parseInt(valor, 10) || 0,
-    };
-    await updateDoc(ref, { estados: nuevo });
+  const marcarEditado = (id, campo, valor) => {
     setDatos((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, estados: nuevo } : d))
+      prev.map((d) =>
+        d.id === id ? { ...d, [campo]: valor, editado: true } : d
+      )
     );
   };
 
-  const eliminar = async (id) => {
-    await deleteDoc(doc(db, "departamentos", departamento, "equipos", id));
-    setDatos(datos.filter((d) => d.id !== id));
-    toast.success(`${t("delete")} ✅`);
+  const marcarEstado = (id, estado, valor) => {
+    setDatos((prev) =>
+      prev.map((d) =>
+        d.id === id
+          ? {
+              ...d,
+              estados: { ...d.estados, [estado]: valor },
+              editado: true,
+            }
+          : d
+      )
+    );
+  };
+
+  const guardar = async (id) => {
+    const ref = doc(db, "departamentos", departamento, "equipos", id);
+    const equipo = datos.find((d) => d.id === id);
+    await updateDoc(ref, {
+      tipo: equipo.tipo,
+      marca: equipo.marca,
+      fecha: equipo.fecha,
+      observaciones: equipo.observaciones,
+      estados: {
+        mantener: parseInt(equipo.estados.mantener) || 0,
+        mejorar: parseInt(equipo.estados.mejorar) || 0,
+        reemplazar: parseInt(equipo.estados.reemplazar) || 0,
+      },
+    });
+    setDatos((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, editado: false } : d))
+    );
+    mostrarNotificacion(t("saved"));
+  };
+
+  const confirmarEliminar = (id) => {
+    setConfirmarEliminacion(id);
+  };
+
+  const eliminar = async () => {
+    await deleteDoc(doc(db, "departamentos", departamento, "equipos", confirmarEliminacion));
+    setDatos((prev) => prev.filter((d) => d.id !== confirmarEliminacion));
+    mostrarNotificacion(t("deleted"));
+    setConfirmarEliminacion(null);
   };
 
   const calcularTotal = () =>
@@ -106,7 +143,7 @@ function InventarioTable({ departamento }) {
 
       <div style={{ display: "flex", gap: "10px", marginBottom: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
         <button onClick={agregar} style={btnStyle}>+ {t("addEquipment")}</button>
-        <InfoDepartamento departamento={departamento} mostrarAlerta={toast.success} />
+        <InfoDepartamento departamento={departamento} />
         <input
           type="text"
           placeholder={t("search")}
@@ -116,7 +153,6 @@ function InventarioTable({ departamento }) {
         />
       </div>
 
-      {/* Agregado id para que html2canvas lo capture */}
       <div id="tabla-inventario" className="tabla-inventario" style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
@@ -129,6 +165,7 @@ function InventarioTable({ departamento }) {
               <th>{t("replace")}</th>
               <th>{t("notes")}</th>
               <th>{t("quantity")}</th>
+              <th>{t("confirm")}</th>
               <th>{t("delete")}</th>
             </tr>
           </thead>
@@ -140,15 +177,37 @@ function InventarioTable({ departamento }) {
                 (parseInt(item.estados.reemplazar) || 0);
               return (
                 <tr key={item.id}>
-                  <td><input style={inputEstilo} value={item.tipo} onChange={(e) => actualizar(item.id, "tipo", e.target.value)} /></td>
-                  <td><input style={inputEstilo} value={item.marca} onChange={(e) => actualizar(item.id, "marca", e.target.value)} /></td>
+                  <td><input style={inputEstilo} value={item.tipo} onChange={(e) => marcarEditado(item.id, "tipo", e.target.value)} /></td>
+                  <td><input style={inputEstilo} value={item.marca} onChange={(e) => marcarEditado(item.id, "marca", e.target.value)} /></td>
                   <td>{item.fecha}</td>
-                  <td><input type="number" min="0" style={{ ...inputEstilo, backgroundColor: getBgColor("mantener"), color: "white", fontSize: "1.1rem", fontWeight: "bold" }} value={item.estados.mantener} onChange={(e) => actualizarEstado(item.id, "mantener", e.target.value)} /></td>
-                  <td><input type="number" min="0" style={{ ...inputEstilo, backgroundColor: getBgColor("mejorar"), color: "white", fontSize: "1.1rem", fontWeight: "bold" }} value={item.estados.mejorar} onChange={(e) => actualizarEstado(item.id, "mejorar", e.target.value)} /></td>
-                  <td><input type="number" min="0" style={{ ...inputEstilo, backgroundColor: getBgColor("reemplazar"), color: "white", fontSize: "1.1rem", fontWeight: "bold" }} value={item.estados.reemplazar} onChange={(e) => actualizarEstado(item.id, "reemplazar", e.target.value)} /></td>
-                  <td><input style={inputEstilo} value={item.observaciones} onChange={(e) => actualizar(item.id, "observaciones", e.target.value)} /></td>
+                  {["mantener", "mejorar", "reemplazar"].map((estado) => (
+                    <td key={estado}>
+                      <input
+                        type="number"
+                        min=""
+                        placeholder=""
+                        style={{
+                          ...inputEstilo,
+                          backgroundColor: getBgColor(estado),
+                          color: "white",
+                          fontSize: "1.1rem",
+                          fontWeight: "bold",
+                        }}
+                        value={item.estados[estado] === 0 ? "" : item.estados[estado] || ""}
+                        onChange={(e) => marcarEstado(item.id, estado, e.target.value)}
+                      />
+                    </td>
+                  ))}
+                  <td><input style={inputEstilo} value={item.observaciones} onChange={(e) => marcarEditado(item.id, "observaciones", e.target.value)} /></td>
                   <td style={{ textAlign: "center", fontWeight: "bold" }}>{cantidad}</td>
-                  <td><button onClick={() => confirm(t("deleteConfirmation")) && eliminar(item.id)} style={delBtn}>🗑️</button></td>
+                  <td>
+                    {item.editado && (
+                      <button onClick={() => guardar(item.id)} style={guardarBtn}>💾</button>
+                    )}
+                  </td>
+                  <td>
+                    <button onClick={() => confirmarEliminar(item.id)} style={delBtn}>🗑️</button>
+                  </td>
                 </tr>
               );
             })}
@@ -161,6 +220,19 @@ function InventarioTable({ departamento }) {
       </p>
 
       <ResumenInventario datos={datos} />
+
+      {notificacion && typeof notificacion === "string" && (
+        <FullScreenNotification mensaje={notificacion} cerrar={() => setNotificacion(null)} />
+      )}
+
+      {confirmarEliminacion && (
+        <FullScreenNotification
+          mensaje={t("deleteConfirmation")}
+          confirmar={eliminar}
+          cancelar={() => setConfirmarEliminacion(null)}
+          esConfirmacion
+        />
+      )}
     </div>
   );
 }
@@ -189,9 +261,17 @@ const btnStyle = {
   fontFamily: "Segoe UI, Tahoma, sans-serif",
 };
 
+const guardarBtn = {
+  ...btnStyle,
+  backgroundColor: "#2e7d32",
+  padding: "8px 12px",
+  fontSize: "1.2rem",
+};
+
 const delBtn = {
   ...btnStyle,
   backgroundColor: "#f44336",
+  padding: "8px 12px",
 };
 
 export default InventarioTable;

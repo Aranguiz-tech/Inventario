@@ -3,6 +3,7 @@ import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "./firebase-config";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./components/LanguageSwitcher";
+import FullScreenNotification from "./components/FullScreenNotification";
 
 function Login({ InicioDeSesionExitoso }) {
   const [mensaje, setMensaje] = useState("");
@@ -43,10 +44,8 @@ function Login({ InicioDeSesionExitoso }) {
         alignItems: "center",
         minHeight: "100dvh",
         backgroundColor: "white",
-        textAlign: "center",
-        padding: "20px",
-        maxWidth: "10000px",
-        margin: "0 auto",
+        padding: "clamp(20px, 5vw, 60px)",
+        width: "100%",
         boxSizing: "border-box",
         position: "relative",
       }}
@@ -59,63 +58,30 @@ function Login({ InicioDeSesionExitoso }) {
         style={{
           color: "#050576",
           fontSize: "clamp(1.5rem, 5vw, 3rem)",
-          marginBottom: "20px",
+          marginBottom: "clamp(1rem, 5vh, 2rem)",
+          textAlign: "center",
         }}
       >
         {t("welcome")}
       </h1>
 
-      {mensaje && (
-        <div
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            backgroundColor: "rgba(0, 0, 0, 0.8)",
-            color: "white",
-            padding: "20px",
-            borderRadius: "10px",
-            zIndex: 1000,
-            textAlign: "center",
-            maxWidth: "90%",
-            boxSizing: "border-box",
-          }}
-        >
-          <p style={{ margin: 0, fontSize: "clamp(1rem, 2vw, 1.5rem)" }}>{mensaje}</p>
-          <button
-            onClick={() => setMensaje("")}
-            style={{
-              marginTop: "10px",
-              padding: "10px 20px",
-              backgroundColor: "#f44336",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              fontSize: "clamp(1rem, 2vw, 1.2rem)",
-              cursor: "pointer",
-            }}
-          >
-            {t("cancel")}
-          </button>
-        </div>
-      )}
-
-      <div>
-        <p style={{ fontSize: "clamp(1rem, 2vw, 1.5rem)", marginBottom: "20px" }}>
+      <div style={{ width: "100%", maxWidth: "400px", textAlign: "center" }}>
+        <p style={{ fontSize: "clamp(1rem, 2.5vw, 1.3rem)", marginBottom: "1.5rem" }}>
           {t("loginPrompt")}
         </p>
+
         <button
           onClick={iniciarSesion}
           style={{
-            padding: "10px 20px",
+            padding: "clamp(10px, 2.5vw, 15px) clamp(20px, 5vw, 30px)",
             backgroundColor: "#050576",
             color: "white",
             border: "none",
-            borderRadius: "5px",
+            borderRadius: "8px",
             fontSize: "clamp(1rem, 2vw, 1.2rem)",
             cursor: "pointer",
             transition: "background-color 0.3s",
+            width: "100%",
           }}
           onMouseOver={(e) => (e.target.style.backgroundColor = "#f44336")}
           onMouseOut={(e) => (e.target.style.backgroundColor = "#050576")}
@@ -123,6 +89,8 @@ function Login({ InicioDeSesionExitoso }) {
           {t("loginGoogle")}
         </button>
       </div>
+
+      {mensaje && <FullScreenNotification mensaje={mensaje} cerrar={() => setMensaje("")} />}
     </div>
   );
 }

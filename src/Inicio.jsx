@@ -5,10 +5,12 @@ import InventarioTable from "./components/InventarioTable";
 import logo from "./assets/logo.png";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./components/LanguageSwitcher";
+import FullScreenNotification from "./components/FullScreenNotification";
 
 function Inicio({ user, cerrarSesion }) {
   const [depSeleccionado, setDepSeleccionado] = useState(null);
   const [departamentoCargado, setDepartamentoCargado] = useState(false);
+  const [notificacion, setNotificacion] = useState("");
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -24,7 +26,7 @@ function Inicio({ user, cerrarSesion }) {
       await signOut(auth);
       cerrarSesion();
     } catch (error) {
-      alert("Error al cerrar sesión");
+      setNotificacion("Error al cerrar sesión");
     }
   };
 
@@ -45,6 +47,8 @@ function Inicio({ user, cerrarSesion }) {
   const seleccionarDepartamento = (departamento) => {
     setDepSeleccionado(departamento);
     localStorage.setItem("departamento_activo", departamento);
+    setNotificacion(`${t(`departments.${departamento}`)}`);
+    setTimeout(() => setNotificacion(""), 1000);
   };
 
   return (
@@ -56,9 +60,7 @@ function Inicio({ user, cerrarSesion }) {
         minHeight: "100dvh",
         width: "100vw",
         backgroundColor: "#f9f9f9",
-        position: "relative",
-        overflowX: "hidden",
-        padding: "3vw",
+        padding: "5vw 3vw",
         boxSizing: "border-box",
       }}
     >
@@ -69,24 +71,26 @@ function Inicio({ user, cerrarSesion }) {
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "3vh",
+          flexWrap: "wrap",
+          gap: "10px",
         }}
       >
         <img
           src={logo}
           alt="Logo del colegio"
           style={{
-            width: "clamp(120px, 15vw, 200px)",
+            width: "clamp(100px, 20vw, 200px)",
             height: "auto",
             objectFit: "contain",
           }}
         />
 
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
           <h4
             style={{
               margin: 0,
               color: "#050576",
-              fontSize: "clamp(1rem, 2vw, 1.2rem)",
+              fontSize: "clamp(1rem, 2.5vw, 1.2rem)",
               fontWeight: "500",
             }}
           >
@@ -103,7 +107,7 @@ function Inicio({ user, cerrarSesion }) {
               color: "white",
               border: "none",
               borderRadius: "5px",
-              fontSize: "clamp(1rem, 2vw, 1.2rem)",
+              fontSize: "clamp(1rem, 2.5vw, 1.2rem)",
               cursor: "pointer",
             }}
           >
@@ -139,7 +143,7 @@ function Inicio({ user, cerrarSesion }) {
             key={departamento}
             onClick={() => seleccionarDepartamento(departamento)}
             style={{
-              flex: "1 1 150px",
+              flex: "1 1 140px",
               maxWidth: "180px",
               padding: "clamp(10px, 2vw, 15px) clamp(20px, 4vw, 30px)",
               backgroundColor:
@@ -173,6 +177,8 @@ function Inicio({ user, cerrarSesion }) {
       {departamentoCargado && depSeleccionado && (
         <InventarioTable departamento={depSeleccionado} />
       )}
+
+      {notificacion && <FullScreenNotification mensaje={notificacion} cerrar={() => setNotificacion("")} />}
     </div>
   );
 }

@@ -10,16 +10,17 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 import { useTranslation } from "react-i18next";
+import FullScreenNotification from "./FullScreenNotification";
 
 function ResumenInventario({ datos }) {
   const { t } = useTranslation();
   const refTabla = useRef();
   const resumenRef = useRef();
   const [mostrarResumen, setMostrarResumen] = useState(false);
+  const [notificacion, setNotificacion] = useState("");
 
   const exportarExcel = () => {
     const datosLimpios = datos.map(({ id, ...item }) => {
@@ -39,6 +40,7 @@ function ResumenInventario({ datos }) {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Inventario");
     XLSX.writeFile(wb, "inventario.xlsx");
+    setNotificacion("Excel exportado correctamente");
   };
 
   const exportarImagen = async () => {
@@ -52,6 +54,7 @@ function ResumenInventario({ datos }) {
     link.download = "inventario.png";
     link.href = canvas.toDataURL();
     link.click();
+    setNotificacion("Imagen exportada correctamente");
   };
 
   const resumenEstados = () => {
@@ -146,6 +149,8 @@ function ResumenInventario({ datos }) {
           </div>
         </div>
       )}
+
+      {notificacion && <FullScreenNotification mensaje={notificacion} cerrar={() => setNotificacion("")} />}
     </div>
   );
 }

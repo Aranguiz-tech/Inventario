@@ -9,7 +9,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase-config";
 import { useTranslation } from "react-i18next";
-import toast from "react-hot-toast";
+import FullScreenNotification from "./FullScreenNotification";
 
 function InfoDepartamento({ departamento }) {
   const { t } = useTranslation();
@@ -18,6 +18,7 @@ function InfoDepartamento({ departamento }) {
   const [personal, setPersonal] = useState([]);
   const [verWifi, setVerWifi] = useState(false);
   const [verPersonal, setVerPersonal] = useState(false);
+  const [notificacion, setNotificacion] = useState("");
   const popupRef = useRef();
 
   const rutaWifi = collection(db, "departamentos", departamento, "wifi");
@@ -25,10 +26,10 @@ function InfoDepartamento({ departamento }) {
 
   const cargarDatos = async () => {
     const w = await getDocs(rutaWifi);
-    setWifi(w.docs.map((d) => ({ ...d.data(), id: d.id })));
+    setWifi(w.docs.map((d) => ({ ...d.data(), id: d.id, editado: false })));
 
     const p = await getDocs(rutaPersonal);
-    setPersonal(p.docs.map((d) => ({ ...d.data(), id: d.id })));
+    setPersonal(p.docs.map((d) => ({ ...d.data(), id: d.id, editado: false })));
   };
 
   useEffect(() => {
@@ -50,46 +51,76 @@ function InfoDepartamento({ departamento }) {
     return () => document.removeEventListener("mousedown", cerrarSiClicFuera);
   }, [mostrar]);
 
-  const agregarWifi = async () => {
-    const docRef = await addDoc(rutaWifi, { nombre: "", clave: "" });
-    setWifi([...wifi, { id: docRef.id, nombre: "", clave: "" }]);
+  const toggleVerWifi = () => {
+    setVerWifi((prev) => !prev);
+    if (!verWifi) setVerPersonal(false);
   };
 
-  const actualizarWifi = async (id, campo, valor) => {
-    await updateDoc(doc(db, "departamentos", departamento, "wifi", id), { [campo]: valor });
-    setWifi((prev) => prev.map((w) => (w.id === id ? { ...w, [campo]: valor } : w)));
-    toast.success("WiFi actualizado");
+  const toggleVerPersonal = () => {
+    setVerPersonal((prev) => !prev);
+    if (!verPersonal) setVerWifi(false);
+  };
+
+  const agregarWifi = async () => {
+    const docRef = await addDoc(rutaWifi, { nombre: "", clave: "" });
+    setWifi([...wifi, { id: docRef.id, nombre: "", clave: "", editado: false }]);
+    setNotificacion("WiFi agregado");
+  };
+
+  const marcarEditadoWifi = (id, campo, valor) => {
+    setWifi((prev) =>
+      prev.map((w) => (w.id === id ? { ...w, [campo]: valor, editado: true } : w))
+    );
+  };
+
+  const guardarWifi = async (id) => {
+    const item = wifi.find((w) => w.id === id);
+    await updateDoc(doc(db, "departamentos", departamento, "wifi", id), {
+      nombre: item.nombre,
+      clave: item.clave,
+    });
+    setWifi((prev) => prev.map((w) => (w.id === id ? { ...w, editado: false } : w)));
+    setNotificacion("WiFi guardado correctamente");
   };
 
   const eliminarWifi = async (id) => {
     await deleteDoc(doc(db, "departamentos", departamento, "wifi", id));
     setWifi((prev) => prev.filter((w) => w.id !== id));
-    toast.success("WiFi eliminado");
+    setNotificacion("WiFi eliminado");
   };
 
   const agregarPersonal = async () => {
     const docRef = await addDoc(rutaPersonal, { nombre: "", correo: "", cargo: "" });
-    setPersonal([...personal, { id: docRef.id, nombre: "", correo: "", cargo: "" }]);
+    setPersonal([...personal, { id: docRef.id, nombre: "", correo: "", cargo: "", editado: false }]);
+    setNotificacion("Personal agregado");
   };
 
-  const actualizarPersonal = async (id, campo, valor) => {
-    await updateDoc(doc(db, "departamentos", departamento, "personal", id), { [campo]: valor });
-    setPersonal((prev) => prev.map((p) => (p.id === id ? { ...p, [campo]: valor } : p)));
-    toast.success("Personal actualizado");
+  const marcarEditadoPersonal = (id, campo, valor) => {
+    setPersonal((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, [campo]: valor, editado: true } : p))
+    );
+  };
+
+  const guardarPersonal = async (id) => {
+    const item = personal.find((p) => p.id === id);
+    await updateDoc(doc(db, "departamentos", departamento, "personal", id), {
+      nombre: item.nombre,
+      correo: item.correo,
+      cargo: item.cargo,
+    });
+    setPersonal((prev) => prev.map((p) => (p.id === id ? { ...p, editado: false } : p)));
+    setNotificacion("Personal guardado correctamente");
   };
 
   const eliminarPersonal = async (id) => {
     await deleteDoc(doc(db, "departamentos", departamento, "personal", id));
     setPersonal((prev) => prev.filter((p) => p.id !== id));
-    toast.success("Personal eliminado");
+    setNotificacion("Personal eliminado");
   };
 
   return (
     <>
-      <button
-        onClick={() => setMostrar(true)}
-        style={botonPrincipal}
-      >
+      <button onClick={() => setMostrar(true)} style={botonPrincipal}>
         {t("departmentInfo")}
       </button>
 
@@ -108,15 +139,16 @@ function InfoDepartamento({ departamento }) {
             </div>
 
             <div style={{ marginBottom: "1.5rem" }}>
-              <button onClick={() => setVerWifi(!verWifi)} style={botonSecundario}>
+              <button onClick={toggleVerWifi} style={verWifi ? botonOcultar : botonVer}>
                 {verWifi ? t("hideWifi") : t("showWifi")}
               </button>
               {verWifi && (
                 <>
                   {wifi.map((w) => (
                     <div key={w.id} style={filaInput}>
-                      <input style={inputEstilo} value={w.nombre} placeholder={t("name")} onChange={(e) => actualizarWifi(w.id, "nombre", e.target.value)} />
-                      <input style={inputEstilo} value={w.clave} placeholder={t("password")} onChange={(e) => actualizarWifi(w.id, "clave", e.target.value)} />
+                      <input style={inputEstilo} value={w.nombre} placeholder={t("name")} onChange={(e) => marcarEditadoWifi(w.id, "nombre", e.target.value)} />
+                      <input style={inputEstilo} value={w.clave} placeholder={t("password")} onChange={(e) => marcarEditadoWifi(w.id, "clave", e.target.value)} />
+                      {w.editado && <button onClick={() => guardarWifi(w.id)} style={botonGuardar}>{t("save")}</button>}
                       <button onClick={() => eliminarWifi(w.id)} style={delBtn}>❌</button>
                     </div>
                   ))}
@@ -126,16 +158,17 @@ function InfoDepartamento({ departamento }) {
             </div>
 
             <div>
-              <button onClick={() => setVerPersonal(!verPersonal)} style={botonSecundario}>
+              <button onClick={toggleVerPersonal} style={verPersonal ? botonOcultar : botonVer}>
                 {verPersonal ? t("hideStaff") : t("showStaff")}
               </button>
               {verPersonal && (
                 <>
                   {personal.map((p) => (
                     <div key={p.id} style={filaInput}>
-                      <input style={inputEstilo} value={p.nombre} placeholder={t("name")} onChange={(e) => actualizarPersonal(p.id, "nombre", e.target.value)} />
-                      <input style={inputEstilo} value={p.correo} placeholder={t("email")} onChange={(e) => actualizarPersonal(p.id, "correo", e.target.value)} />
-                      <input style={inputEstilo} value={p.cargo} placeholder={t("role")} onChange={(e) => actualizarPersonal(p.id, "cargo", e.target.value)} />
+                      <input style={inputEstilo} value={p.nombre} placeholder={t("name")} onChange={(e) => marcarEditadoPersonal(p.id, "nombre", e.target.value)} />
+                      <input style={inputEstilo} value={p.correo} placeholder={t("email")} onChange={(e) => marcarEditadoPersonal(p.id, "correo", e.target.value)} />
+                      <input style={inputEstilo} value={p.cargo} placeholder={t("role")} onChange={(e) => marcarEditadoPersonal(p.id, "cargo", e.target.value)} />
+                      {p.editado && <button onClick={() => guardarPersonal(p.id)} style={botonGuardar}>{t("save")}</button>}
                       <button onClick={() => eliminarPersonal(p.id)} style={delBtn}>❌</button>
                     </div>
                   ))}
@@ -146,6 +179,8 @@ function InfoDepartamento({ departamento }) {
           </div>
         </div>
       )}
+
+      {notificacion && <FullScreenNotification mensaje={notificacion} cerrar={() => setNotificacion("")} />}
     </>
   );
 }
@@ -164,6 +199,31 @@ const botonSecundario = {
   ...botonPrincipal,
   backgroundColor: "#050576",
   marginTop: "10px",
+};
+
+const botonGuardar = {
+  backgroundColor: "#28a745",
+  color: "white",
+  border: "none",
+  borderRadius: "6px",
+  cursor: "pointer",
+  padding: "10px 16px",
+  fontWeight: "bold",
+};
+
+const botonVer = {
+  backgroundColor: "#050576",
+  color: "white",
+  padding: "10px 16px",
+  borderRadius: "6px",
+  border: "none",
+  cursor: "pointer",
+  fontWeight: "bold",
+};
+
+const botonOcultar = {
+  ...botonVer,
+  backgroundColor: "#b71c1c",
 };
 
 const delBtn = {
