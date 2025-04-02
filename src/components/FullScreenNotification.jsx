@@ -1,10 +1,16 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 function FullScreenNotification({ mensaje, cerrar, confirmar, cancelar, esConfirmacion = false }) {
+  const confirmarRef = useRef(null);
+
   useEffect(() => {
     if (!esConfirmacion) {
       const timeout = setTimeout(cerrar, 500);
       return () => clearTimeout(timeout);
+    } else {
+      setTimeout(() => {
+        confirmarRef.current?.focus();
+      }, 100);
     }
   }, [cerrar, esConfirmacion]);
 
@@ -14,8 +20,16 @@ function FullScreenNotification({ mensaje, cerrar, confirmar, cancelar, esConfir
         <p style={texto}>{mensaje}</p>
         {esConfirmacion && (
           <div style={botones}>
-            <button onClick={confirmar} style={botonConfirmar}>Sí</button>
-            <button onClick={cancelar} style={botonCancelar}>No</button>
+            <button
+              ref={confirmarRef}
+              onClick={confirmar}
+              style={botonConfirmar}
+            >
+              Sí
+            </button>
+            <button onClick={cancelar} style={botonCancelar}>
+              No
+            </button>
           </div>
         )}
       </div>
@@ -23,6 +37,7 @@ function FullScreenNotification({ mensaje, cerrar, confirmar, cancelar, esConfir
   );
 }
 
+// Estilos responsivos y centrados
 const fondo = {
   position: "fixed",
   top: 0,
@@ -34,49 +49,55 @@ const fondo = {
   justifyContent: "center",
   alignItems: "center",
   zIndex: 9999,
+  padding: "clamp(10px, 4vw, 40px)",
+  boxSizing: "border-box",
 };
 
 const caja = {
   backgroundColor: "white",
-  padding: "30px 40px",
-  borderRadius: "15px",
-  boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-  maxWidth: "90%",
-  width: "clamp(300px, 80%, 500px)",
+  padding: "clamp(20px, 5vw, 40px)",
+  borderRadius: "16px",
+  boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+  width: "100%",
+  maxWidth: "clamp(280px, 80vw, 480px)",
   textAlign: "center",
+  boxSizing: "border-box",
 };
 
 const texto = {
-  fontSize: "1.3rem",
+  fontSize: "clamp(1.1rem, 2.5vw, 1.5rem)",
   color: "#050576",
   fontWeight: "bold",
-  marginBottom: "20px",
+  marginBottom: "clamp(16px, 3vw, 24px)",
 };
 
 const botones = {
   display: "flex",
+  flexWrap: "wrap",
   justifyContent: "center",
-  gap: "20px",
+  gap: "clamp(10px, 3vw, 20px)",
+};
+
+const botonBase = {
+  padding: "clamp(10px, 2.5vw, 14px) clamp(20px, 4vw, 32px)",
+  fontSize: "clamp(0.95rem, 2vw, 1.1rem)",
+  border: "none",
+  borderRadius: "10px",
+  cursor: "pointer",
+  fontWeight: "bold",
+  transition: "background-color 0.3s",
 };
 
 const botonConfirmar = {
+  ...botonBase,
   backgroundColor: "#4CAF50",
   color: "white",
-  padding: "10px 20px",
-  fontSize: "1rem",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
 };
 
 const botonCancelar = {
+  ...botonBase,
   backgroundColor: "#f44336",
   color: "white",
-  padding: "10px 20px",
-  fontSize: "1rem",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
 };
 
 export default FullScreenNotification;

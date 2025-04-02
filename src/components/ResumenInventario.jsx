@@ -88,8 +88,16 @@ function ResumenInventario({ datos }) {
   }, [mostrarResumen]);
 
   return (
-    <div style={{ marginTop: "2rem" }}>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center" }}>
+    <div style={{ marginTop: "2rem", padding: "0 1rem" }}>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "10px",
+          justifyContent: "center",
+          width: "100%",
+        }}
+      >
         <button onClick={exportarExcel} style={boton}>📁 {t("exportExcel")}</button>
         <button onClick={exportarImagen} style={boton}>🖼️ {t("downloadImage")}</button>
         <button onClick={() => setMostrarResumen(!mostrarResumen)} style={boton}>
@@ -107,15 +115,22 @@ function ResumenInventario({ datos }) {
             marginTop: "2rem",
             backgroundColor: "#f9f9f9",
             borderRadius: "12px",
-            padding: "2rem",
+            padding: "2rem 1rem",
             boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-            maxHeight: "auto",
             overflow: "hidden",
           }}
         >
           <h3 style={{ textAlign: "center", color: "#050576" }}>{t("summary")}</h3>
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "40px" }}>
-            <div style={{ width: "300px", height: "300px" }}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: "40px",
+              width: "100%",
+            }}
+          >
+            <div style={{ flex: "1 1 300px", maxWidth: "400px", height: "300px" }}>
               <h4 style={{ textAlign: "center" }}>{t("equipmentByState")}</h4>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -135,7 +150,7 @@ function ResumenInventario({ datos }) {
               </ResponsiveContainer>
             </div>
 
-            <div style={{ width: "500px", height: `${Math.max(300, resumenTipos().length * 30)}px` }}>
+            <div style={{ flex: "1 1 400px", maxWidth: "600px", height: `${Math.max(300, resumenTipos().length * 30)}px` }}>
               <h4 style={{ textAlign: "center" }}>{t("equipmentByType")}</h4>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={resumenTipos()} layout="vertical" margin={{ left: 40 }}>
@@ -162,8 +177,9 @@ const boton = {
   color: "white",
   border: "none",
   cursor: "pointer",
-  fontSize: "1rem",
+  fontSize: "clamp(0.9rem, 1.2vw, 1rem)",
   fontFamily: "Segoe UI, Tahoma, sans-serif",
+  flex: "1 1 auto",
 };
 
 export default ResumenInventario;

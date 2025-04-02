@@ -138,10 +138,10 @@ function InventarioTable({ departamento }) {
   });
 
   return (
-    <div style={{ width: "100%", marginTop: "2rem", overflowX: "auto" }}>
-      <h2 style={{ color: "#050576", textAlign: "center" }}>{t(`departments.${departamento}`)}</h2>
+    <div style={{ width: "100%", marginTop: "2rem", overflowX: "auto", padding: "1rem" }}>
+      <h2 style={{ color: "#050576", textAlign: "center", fontSize: "clamp(1.2rem, 3vw, 2rem)" }}>{t(`departments.${departamento}`)}</h2>
 
-      <div style={{ display: "flex", gap: "10px", marginBottom: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center", marginBottom: "1rem" }}>
         <button onClick={agregar} style={btnStyle}>+ {t("addEquipment")}</button>
         <InfoDepartamento departamento={departamento} />
         <input
@@ -149,11 +149,11 @@ function InventarioTable({ departamento }) {
           placeholder={t("search")}
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
-          style={{ ...inputEstilo, minWidth: "250px" }}
+          style={{ ...inputEstilo, minWidth: "200px", flex: "1 1 250px" }}
         />
       </div>
 
-      <div id="tabla-inventario" className="tabla-inventario" style={{ overflowX: "auto" }}>
+      <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ backgroundColor: "#e0e0e0" }}>
@@ -176,7 +176,7 @@ function InventarioTable({ departamento }) {
                 (parseInt(item.estados.mejorar) || 0) +
                 (parseInt(item.estados.reemplazar) || 0);
               return (
-                <tr key={item.id}>
+                <tr key={item.id} style={{ fontSize: "clamp(0.8rem, 1.2vw, 1rem)" }}>
                   <td><input style={inputEstilo} value={item.tipo} onChange={(e) => marcarEditado(item.id, "tipo", e.target.value)} /></td>
                   <td><input style={inputEstilo} value={item.marca} onChange={(e) => marcarEditado(item.id, "marca", e.target.value)} /></td>
                   <td>{item.fecha}</td>
@@ -239,7 +239,7 @@ function InventarioTable({ departamento }) {
 
 const inputEstilo = {
   padding: "10px",
-  fontSize: "1.05rem",
+  fontSize: "1rem",
   borderRadius: "6px",
   border: "1px solid #ccc",
   maxWidth: "180px",

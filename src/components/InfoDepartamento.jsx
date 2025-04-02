@@ -186,13 +186,14 @@ function InfoDepartamento({ departamento }) {
 }
 
 const botonPrincipal = {
-  padding: "10px 20px",
+  padding: "clamp(10px, 1.5vw, 14px) clamp(20px, 3vw, 28px)",
   backgroundColor: "#2196f3",
   color: "white",
   border: "none",
   borderRadius: "6px",
   cursor: "pointer",
   fontWeight: "bold",
+  fontSize: "clamp(1rem, 1.5vw, 1.1rem)",
 };
 
 const botonSecundario = {
@@ -209,6 +210,7 @@ const botonGuardar = {
   cursor: "pointer",
   padding: "10px 16px",
   fontWeight: "bold",
+  fontSize: "clamp(0.9rem, 1.3vw, 1rem)",
 };
 
 const botonVer = {
@@ -219,6 +221,7 @@ const botonVer = {
   border: "none",
   cursor: "pointer",
   fontWeight: "bold",
+  fontSize: "clamp(0.9rem, 1.3vw, 1rem)",
 };
 
 const botonOcultar = {
@@ -233,6 +236,7 @@ const delBtn = {
   borderRadius: "6px",
   cursor: "pointer",
   padding: "6px 12px",
+  fontSize: "clamp(0.9rem, 1.2vw, 1rem)",
 };
 
 const filaInput = {
@@ -240,11 +244,12 @@ const filaInput = {
   gap: "10px",
   marginBottom: "10px",
   flexWrap: "wrap",
+  justifyContent: "center",
 };
 
 const inputEstilo = {
   padding: "10px",
-  fontSize: "1rem",
+  fontSize: "clamp(0.9rem, 1.2vw, 1rem)",
   borderRadius: "6px",
   border: "1px solid #ccc",
   fontFamily: "Segoe UI, Tahoma, sans-serif",
@@ -263,16 +268,19 @@ const fondoModal = {
   justifyContent: "center",
   alignItems: "center",
   zIndex: 1000,
+  padding: "10px",
+  boxSizing: "border-box",
 };
 
 const popupContenido = {
   backgroundColor: "white",
-  padding: "30px",
+  padding: "clamp(20px, 4vw, 30px)",
   borderRadius: "10px",
   width: "95%",
   maxWidth: "700px",
   maxHeight: "90vh",
   overflowY: "auto",
+  boxSizing: "border-box",
 };
 
 export default InfoDepartamento;
