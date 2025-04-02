@@ -37,7 +37,6 @@ function FullScreenNotification({ mensaje, cerrar, confirmar, cancelar, esConfir
   );
 }
 
-// Estilos responsivos y centrados
 const fondo = {
   position: "fixed",
   top: 0,
