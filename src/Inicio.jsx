@@ -48,7 +48,7 @@ function Inicio({ user, cerrarSesion }) {
     setDepSeleccionado(departamento);
     localStorage.setItem("departamento_activo", departamento);
     setNotificacion(`${t(`departments.${departamento}`)}`);
-    setTimeout(() => setNotificacion(""), 1000);
+    setTimeout(() => setNotificacion(""), 500);
   };
 
   return (

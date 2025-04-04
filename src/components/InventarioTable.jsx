@@ -139,9 +139,18 @@ function InventarioTable({ departamento }) {
 
   return (
     <div style={{ width: "100%", marginTop: "2rem", overflowX: "auto", padding: "1rem" }}>
-      <h2 style={{ color: "#050576", textAlign: "center", fontSize: "clamp(1.2rem, 3vw, 2rem)" }}>{t(`departments.${departamento}`)}</h2>
+      <h2 style={{ color: "#050576", textAlign: "center", fontSize: "clamp(1.2rem, 3vw, 2rem)" }}>
+        {t(`departments.${departamento}`)}
+      </h2>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center", marginBottom: "1rem" }}>
+      <div style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: "10px",
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: "1rem"
+      }}>
         <button onClick={agregar} style={btnStyle}>+ {t("addEquipment")}</button>
         <InfoDepartamento departamento={departamento} />
         <input
@@ -149,24 +158,29 @@ function InventarioTable({ departamento }) {
           placeholder={t("search")}
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
-          style={{ ...inputEstilo, minWidth: "200px", flex: "1 1 250px" }}
+          style={{ ...inputEstilo, minWidth: "180px", flex: "1 1 250px" }}
         />
       </div>
 
       <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <table style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          minWidth: "1000px",
+          tableLayout: "fixed"
+        }}>
           <thead>
             <tr style={{ backgroundColor: "#e0e0e0" }}>
-              <th>{t("type")}</th>
-              <th>{t("brand")}</th>
-              <th>{t("date")}</th>
-              <th>{t("maintain")}</th>
-              <th>{t("improve")}</th>
-              <th>{t("replace")}</th>
-              <th>{t("notes")}</th>
-              <th>{t("quantity")}</th>
-              <th>{t("confirm")}</th>
-              <th>{t("delete")}</th>
+              <th style={thStyle}>{t("type")}</th>
+              <th style={thStyle}>{t("brand")}</th>
+              <th style={thStyle}>{t("date")}</th>
+              <th style={thStyle}>{t("maintain")}</th>
+              <th style={thStyle}>{t("improve")}</th>
+              <th style={thStyle}>{t("replace")}</th>
+              <th style={thStyle}>{t("notes")}</th>
+              <th style={thStyle}>{t("quantity")}</th>
+              <th style={thStyle}>{t("confirm")}</th>
+              <th style={thStyle}>{t("delete")}</th>
             </tr>
           </thead>
           <tbody>
@@ -177,15 +191,15 @@ function InventarioTable({ departamento }) {
                 (parseInt(item.estados.reemplazar) || 0);
               return (
                 <tr key={item.id} style={{ fontSize: "clamp(0.8rem, 1.2vw, 1rem)" }}>
-                  <td><input style={inputEstilo} value={item.tipo} onChange={(e) => marcarEditado(item.id, "tipo", e.target.value)} /></td>
-                  <td><input style={inputEstilo} value={item.marca} onChange={(e) => marcarEditado(item.id, "marca", e.target.value)} /></td>
-                  <td>{item.fecha}</td>
+                  <td style={tdStyle}><input style={inputEstilo} value={item.tipo} onChange={(e) => marcarEditado(item.id, "tipo", e.target.value)} /></td>
+                  <td style={tdStyle}><input style={inputEstilo} value={item.marca} onChange={(e) => marcarEditado(item.id, "marca", e.target.value)} /></td>
+                  <td style={{ ...tdStyle, textAlign: "center" }}>
+                    <span style={{ fontSize: "clamp(0.8rem, 1vw, 1rem)", display: "inline-block" }}>{item.fecha}</span>
+                  </td>
                   {["mantener", "mejorar", "reemplazar"].map((estado) => (
-                    <td key={estado}>
+                    <td key={estado} style={tdStyle}>
                       <input
                         type="number"
-                        min=""
-                        placeholder=""
                         style={{
                           ...inputEstilo,
                           backgroundColor: getBgColor(estado),
@@ -198,14 +212,14 @@ function InventarioTable({ departamento }) {
                       />
                     </td>
                   ))}
-                  <td><input style={inputEstilo} value={item.observaciones} onChange={(e) => marcarEditado(item.id, "observaciones", e.target.value)} /></td>
-                  <td style={{ textAlign: "center", fontWeight: "bold" }}>{cantidad}</td>
-                  <td>
+                  <td style={tdStyle}><input style={inputEstilo} value={item.observaciones} onChange={(e) => marcarEditado(item.id, "observaciones", e.target.value)} /></td>
+                  <td style={{ ...tdStyle, textAlign: "center", fontWeight: "bold" }}>{cantidad}</td>
+                  <td style={tdStyle}>
                     {item.editado && (
                       <button onClick={() => guardar(item.id)} style={guardarBtn}>💾</button>
                     )}
                   </td>
-                  <td>
+                  <td style={tdStyle}>
                     <button onClick={() => confirmarEliminar(item.id)} style={delBtn}>🗑️</button>
                   </td>
                 </tr>
@@ -238,16 +252,32 @@ function InventarioTable({ departamento }) {
 }
 
 const inputEstilo = {
-  padding: "10px",
-  fontSize: "1rem",
+  padding: "8px",
+  fontSize: "clamp(0.8rem, 1vw, 1rem)",
   borderRadius: "6px",
   border: "1px solid #ccc",
-  maxWidth: "180px",
+  maxWidth: "160px",
   width: "100%",
   fontFamily: "Segoe UI, Tahoma, sans-serif",
   textAlign: "center",
   boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)",
   outlineColor: "#050576",
+};
+
+const thStyle = {
+  padding: "8px",
+  minWidth: "90px",
+  fontSize: "clamp(0.8rem, 1vw, 1rem)",
+  wordBreak: "break-word",
+  textAlign: "center",
+};
+
+const tdStyle = {
+  padding: "8px",
+  minWidth: "90px",
+  textAlign: "center",
+  verticalAlign: "middle",
+  wordBreak: "break-word",
 };
 
 const btnStyle = {
