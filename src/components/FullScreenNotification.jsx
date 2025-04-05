@@ -1,7 +1,21 @@
 import React, { useEffect, useRef } from "react";
 
-function FullScreenNotification({ mensaje, cerrar, confirmar, cancelar, esConfirmacion = false }) {
+function FullScreenNotification({
+  mensaje,
+  cerrar,
+  confirmar,
+  cancelar,
+  esConfirmacion = false,
+}) {
   const confirmarRef = useRef(null);
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") cerrar();
+    };
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [cerrar]);
 
   useEffect(() => {
     if (!esConfirmacion) {
@@ -14,9 +28,13 @@ function FullScreenNotification({ mensaje, cerrar, confirmar, cancelar, esConfir
     }
   }, [cerrar, esConfirmacion]);
 
+  const handleFondoClick = () => {
+    if (!esConfirmacion) cerrar();
+  };
+
   return (
-    <div style={fondo}>
-      <div style={caja}>
+    <div style={fondo} onClick={handleFondoClick}>
+      <div style={caja} onClick={(e) => e.stopPropagation()}>
         <p style={texto}>{mensaje}</p>
         {esConfirmacion && (
           <div style={botones}>
@@ -25,10 +43,10 @@ function FullScreenNotification({ mensaje, cerrar, confirmar, cancelar, esConfir
               onClick={confirmar}
               style={botonConfirmar}
             >
-              Sí
+              ✅ Sí
             </button>
             <button onClick={cancelar} style={botonCancelar}>
-              No
+              ❌ No
             </button>
           </div>
         )}
@@ -61,6 +79,8 @@ const caja = {
   maxWidth: "clamp(280px, 80vw, 480px)",
   textAlign: "center",
   boxSizing: "border-box",
+  transform: "scale(1)",
+  animation: "aparecer 0.25s ease-in-out",
 };
 
 const texto = {
@@ -85,6 +105,7 @@ const botonBase = {
   cursor: "pointer",
   fontWeight: "bold",
   transition: "background-color 0.3s",
+  minWidth: "120px",
 };
 
 const botonConfirmar = {

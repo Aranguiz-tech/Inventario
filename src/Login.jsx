@@ -25,13 +25,14 @@ function Login({ InicioDeSesionExitoso }) {
 
       if (correosAutorizados.includes(correo)) {
         setMensaje("");
+        localStorage.setItem("usuario", JSON.stringify(resultado.user));
         InicioDeSesionExitoso(resultado.user);
       } else {
         setMensaje(t("correoNoAutorizado") || "Correo no autorizado");
       }
     } catch (error) {
       setMensaje(t("errorInicioSesion") || "Error al iniciar sesión. Inténtalo de nuevo.");
-      console.log("Error al iniciar sesión:", error);
+      console.error("Error al iniciar sesión:", error);
     }
   };
 
@@ -90,7 +91,12 @@ function Login({ InicioDeSesionExitoso }) {
         </button>
       </div>
 
-      {mensaje && <FullScreenNotification mensaje={mensaje} cerrar={() => setMensaje("")} />}
+      {mensaje && (
+        <FullScreenNotification
+          mensaje={mensaje}
+          cerrar={() => setMensaje("")}
+        />
+      )}
     </div>
   );
 }

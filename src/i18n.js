@@ -56,21 +56,12 @@ const resources = {
       equipmentByType: "Equipos por tipo",
       typeSummary: "Cantidad por Tipo",
       stateDistribution: "Distribución de Estados",
-      departments: {
-        Materiales: "Materiales",
-        Computación: "Computación",
-        Biblioteca: "Biblioteca",
-        Lenguaje: "Lenguaje",
-        Ciencias: "Ciencias",
-        Matemáticas: "Matemáticas",
-        JR: "JR",
-        Infant: "Infant",
-        PE: "PE",
-        EducaciónFísica: "Educación Física",
-        Inglés: "Inglés",
-        Administración: "Administración",
-        Profesores: "Profesores"
-      }
+      departments: {},
+      edit: "Editar",
+      noObservations: "Sin observaciones",
+      enterNotes: "Escribe tus observaciones aquí...",
+      errorNoQuantity: "La cantidad total debe ser mayor a 0.",
+      deleted: "Eliminado correctamente"
     }
   },
   en: {
@@ -127,28 +118,21 @@ const resources = {
       equipmentByType: "Equipment by type",
       typeSummary: "Quantity by Type",
       stateDistribution: "State Distribution",
-      departments: {
-        Materiales: "Supplies",
-        Computación: "Computing",
-        Biblioteca: "Library",
-        Lenguaje: "Language",
-        Ciencias: "Science",
-        Matemáticas: "Maths",
-        JR: "JR",
-        Infant: "Infant",
-        PE: "PE",
-        EducaciónFísica: "Physical Education",
-        Inglés: "English",
-        Administración: "Administration",
-        Profesores: "Teachers"
-      }
+      departments: {},
+      edit: "Edit",
+      noObservations: "No observations",
+      enterNotes: "Enter your notes here...",
+      errorNoQuantity: "The total quantity must be greater than 0.",
+      deleted: "Deleted successfully"
     }
   }
 };
 
+const savedLang = localStorage.getItem("lang") || "es";
+
 i18n.use(initReactI18next).init({
   resources,
-  lng: "es",
+  lng: savedLang,
   fallbackLng: "es",
   interpolation: {
     escapeValue: false

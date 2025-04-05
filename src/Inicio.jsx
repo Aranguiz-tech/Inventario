@@ -1,54 +1,65 @@
 import { useState, useEffect } from "react";
 import { signOut } from "firebase/auth";
-import { auth } from "./firebase-config";
+import { collection, getDocs } from "firebase/firestore";
+import { auth, db } from "./firebase-config";
 import InventarioTable from "./components/InventarioTable";
+import FullScreenNotification from "./components/FullScreenNotification";
+import LanguageSwitcher from "./components/LanguageSwitcher";
 import logo from "./assets/logo.png";
 import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "./components/LanguageSwitcher";
-import FullScreenNotification from "./components/FullScreenNotification";
+import i18n from "./i18n";
 
 function Inicio({ user, cerrarSesion }) {
+  const [departamentos, setDepartamentos] = useState([]);
   const [depSeleccionado, setDepSeleccionado] = useState(null);
   const [departamentoCargado, setDepartamentoCargado] = useState(false);
   const [notificacion, setNotificacion] = useState("");
   const { t } = useTranslation();
 
   useEffect(() => {
-    const ultimoDepartamento = localStorage.getItem("departamento_activo");
-    if (ultimoDepartamento) {
-      setDepSeleccionado(ultimoDepartamento);
-    }
-    setDepartamentoCargado(true);
+    const cargarDepartamentos = async () => {
+      const snapshot = await getDocs(collection(db, "departamentos"));
+      const lista = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          nombre_es: data.nombre_es,
+          nombre_en: data.nombre_en,
+        };
+      });
+
+      lista.forEach((d) => {
+        i18n.addResource("es", "translation", `departments.${d.id}`, d.nombre_es);
+        i18n.addResource("en", "translation", `departments.${d.id}`, d.nombre_en);
+      });
+
+      setDepartamentos(lista);
+
+      const ultimo = localStorage.getItem("departamento_activo");
+      if (ultimo && lista.some((d) => d.id === ultimo)) {
+        setDepSeleccionado(ultimo);
+      }
+
+      setDepartamentoCargado(true);
+    };
+
+    cargarDepartamentos();
   }, []);
 
   const cerrar = async () => {
     try {
       await signOut(auth);
       cerrarSesion();
-    } catch (error) {
+    } catch {
       setNotificacion("Error al cerrar sesión");
     }
   };
 
-  const departamentos = [
-    "Computación",
-    "Biblioteca",
-    "Lenguaje",
-    "Ciencias",
-    "Matemáticas",
-    "JR",
-    "Infant",
-    "EducaciónFísica",
-    "Inglés",
-    "Administración",
-    "Profesores",
-  ];
-
-  const seleccionarDepartamento = (departamento) => {
-    setDepSeleccionado(departamento);
-    localStorage.setItem("departamento_activo", departamento);
-    setNotificacion(`${t(`departments.${departamento}`)}`);
-    setTimeout(() => setNotificacion(""), 500);
+  const seleccionarDepartamento = (id) => {
+    setDepSeleccionado(id);
+    localStorage.setItem("departamento_activo", id);
+    setNotificacion(t(`departments.${id}`));
+    setTimeout(() => setNotificacion(""), 600);
   };
 
   return (
@@ -77,14 +88,13 @@ function Inicio({ user, cerrarSesion }) {
       >
         <img
           src={logo}
-          alt="Logo del colegio"
+          alt="Logo"
           style={{
             width: "clamp(100px, 20vw, 200px)",
             height: "auto",
             objectFit: "contain",
           }}
         />
-
         <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
           <h4
             style={{
@@ -138,16 +148,15 @@ function Inicio({ user, cerrarSesion }) {
           marginBottom: "5vh",
         }}
       >
-        {departamentos.map((departamento) => (
+        {departamentos.map(({ id }) => (
           <button
-            key={departamento}
-            onClick={() => seleccionarDepartamento(departamento)}
+            key={id}
+            onClick={() => seleccionarDepartamento(id)}
             style={{
               flex: "1 1 140px",
               maxWidth: "180px",
               padding: "clamp(10px, 2vw, 15px) clamp(20px, 4vw, 30px)",
-              backgroundColor:
-                depSeleccionado === departamento ? "#4CAF50" : "#050576",
+              backgroundColor: depSeleccionado === id ? "#4CAF50" : "#050576",
               color: "white",
               border: "none",
               borderRadius: "8px",
@@ -155,30 +164,31 @@ function Inicio({ user, cerrarSesion }) {
               cursor: "pointer",
               transition: "background-color 0.3s",
               textAlign: "center",
-              boxShadow:
-                depSeleccionado === departamento
-                  ? "0 0 10px rgba(0, 0, 0, 0.3)"
-                  : "none",
+              boxShadow: depSeleccionado === id
+                ? "0 0 10px rgba(0, 0, 0, 0.3)"
+                : "none",
             }}
             onMouseOver={(e) => {
               e.target.style.backgroundColor =
-                depSeleccionado === departamento ? "#4CAF50" : "#f44336";
+                depSeleccionado === id ? "#4CAF50" : "#f44336";
             }}
             onMouseOut={(e) => {
               e.target.style.backgroundColor =
-                depSeleccionado === departamento ? "#4CAF50" : "#050576";
+                depSeleccionado === id ? "#4CAF50" : "#050576";
             }}
           >
-            {t(`departments.${departamento}`)}
+            {t(`departments.${id}`)}
           </button>
         ))}
       </div>
 
       {departamentoCargado && depSeleccionado && (
-        <InventarioTable departamento={depSeleccionado} />
+        <InventarioTable departamento={depSeleccionado} user={user} />
       )}
 
-      {notificacion && <FullScreenNotification mensaje={notificacion} cerrar={() => setNotificacion("")} />}
+      {notificacion && (
+        <FullScreenNotification mensaje={notificacion} cerrar={() => setNotificacion("")} />
+      )}
     </div>
   );
 }

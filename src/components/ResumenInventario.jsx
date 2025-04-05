@@ -26,6 +26,7 @@ function ResumenInventario({ datos }) {
     const datosLimpios = datos.map(({ id, ...item }) => {
       const cantidad = Object.values(item.estados || {}).reduce((a, b) => a + (parseInt(b) || 0), 0);
       return {
+        Sala: item.sala,
         Tipo: item.tipo,
         Marca: item.marca,
         Fecha: item.fecha,
@@ -40,7 +41,7 @@ function ResumenInventario({ datos }) {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Inventario");
     XLSX.writeFile(wb, "inventario.xlsx");
-    setNotificacion("Excel exportado correctamente");
+    setNotificacion(t("exportExcel") + " ✅");
   };
 
   const exportarImagen = async () => {
@@ -54,7 +55,7 @@ function ResumenInventario({ datos }) {
     link.download = "inventario.png";
     link.href = canvas.toDataURL();
     link.click();
-    setNotificacion("Imagen exportada correctamente");
+    setNotificacion(t("downloadImage") + " ✅");
   };
 
   const resumenEstados = () => {
@@ -72,9 +73,9 @@ function ResumenInventario({ datos }) {
   const resumenTipos = () => {
     const tipos = {};
     datos.forEach((item) => {
-      const tipo = item.tipo || "";
+      const tipoTraducido = t(item.tipo || "") || item.tipo || "";
       const cantidad = Object.values(item.estados || {}).reduce((a, b) => a + (parseInt(b) || 0), 0);
-      tipos[tipo] = (tipos[tipo] || 0) + cantidad;
+      tipos[tipoTraducido] = (tipos[tipoTraducido] || 0) + cantidad;
     });
     return Object.entries(tipos).map(([tipo, cantidad]) => ({ tipo, cantidad }));
   };
@@ -98,9 +99,17 @@ function ResumenInventario({ datos }) {
           width: "100%",
         }}
       >
-        <button onClick={exportarExcel} style={boton}>📁 {t("exportExcel")}</button>
-        <button onClick={exportarImagen} style={boton}>🖼️ {t("downloadImage")}</button>
-        <button onClick={() => setMostrarResumen(!mostrarResumen)} style={boton}>
+        <button onClick={exportarExcel} style={boton} aria-label={t("exportExcel")}>
+          📁 {t("exportExcel")}
+        </button>
+        <button onClick={exportarImagen} style={boton} aria-label={t("downloadImage")}>
+          🖼️ {t("downloadImage")}
+        </button>
+        <button
+          onClick={() => setMostrarResumen(!mostrarResumen)}
+          style={boton}
+          aria-label={t("summary")}
+        >
           📊 {mostrarResumen ? t("hideMetrics") : t("showMetrics")}
         </button>
       </div>
@@ -165,7 +174,9 @@ function ResumenInventario({ datos }) {
         </div>
       )}
 
-      {notificacion && <FullScreenNotification mensaje={notificacion} cerrar={() => setNotificacion("")} />}
+      {notificacion && (
+        <FullScreenNotification mensaje={notificacion} cerrar={() => setNotificacion("")} />
+      )}
     </div>
   );
 }
