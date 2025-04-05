@@ -7,10 +7,10 @@ import {
   deleteDoc,
   doc,
 } from "firebase/firestore";
-import { db } from "../firebase-config"; // Asegúrate que la ruta a tu config de Firebase sea correcta
-import InfoDepartamento from "./InfoDepartamento"; // Asegúrate que la ruta sea correcta
-import FullScreenNotification from "./FullScreenNotification"; // Asegúrate que la ruta sea correcta
-import ResumenInventario from "./ResumenInventario"; // Asegúrate que la ruta sea correcta
+import { db } from "../firebase-config";
+import InfoDepartamento from "./InfoDepartamento";
+import FullScreenNotification from "./FullScreenNotification";
+import ResumenInventario from "./ResumenInventario";
 import { useTranslation } from "react-i18next";
 
 function InventarioTable({ departamento, user }) {
@@ -19,16 +19,12 @@ function InventarioTable({ departamento, user }) {
   const [filtro, setFiltro] = useState("");
   const [notificacion, setNotificacion] = useState(null);
   const [confirmarEliminacion, setConfirmarEliminacion] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSavingId, setIsSavingId] = useState(null);
+  const [isDeletingId, setIsDeletingId] = useState(null);
 
-  // --- Estados para Feedback Visual ---
-  const [isLoading, setIsLoading] = useState(false); // Para la carga inicial
-  const [isSavingId, setIsSavingId] = useState(null); // ID del item guardándose
-  const [isDeletingId, setIsDeletingId] = useState(null); // ID del item eliminándose
-
-  // Referencia a la colección de Firestore
   const ruta = collection(db, "departamentos", departamento, "equipos");
 
-  // --- Cargar Datos (con manejo de errores y estado de carga) ---
   const cargarDatos = async () => {
     if (!departamento) return;
     setIsLoading(true);
@@ -58,12 +54,10 @@ function InventarioTable({ departamento, user }) {
     }
   };
 
-  // Efecto para cargar datos cuando cambia el departamento
   useEffect(() => {
     cargarDatos();
   }, [departamento]);
 
-  // --- Agregar Nuevo Equipo (con manejo de errores) ---
   const agregar = async () => {
     const nuevo = {
       sala: "",
@@ -87,13 +81,11 @@ function InventarioTable({ departamento, user }) {
     }
   };
 
-  // --- Mostrar Notificación Temporal ---
   const mostrarNotificacion = (mensaje) => {
     setNotificacion(mensaje);
     setTimeout(() => setNotificacion(null), 2000);
   };
 
-  // --- Marcar Campo como Editado (actualiza estado local) ---
   const marcarEditado = (id, campo, valor) => {
     setDatos((prev) =>
       prev.map((d) =>
@@ -114,7 +106,6 @@ function InventarioTable({ departamento, user }) {
     );
   };
 
-  // --- Guardar Cambios (con manejo de errores y estado de carga) ---
   const guardar = async (id) => {
     const equipo = datos.find((d) => d.id === id);
     if (!equipo || !equipo.editado) return;
@@ -127,7 +118,7 @@ function InventarioTable({ departamento, user }) {
         tipo: equipo.tipo,
         marca: equipo.marca,
         fecha: equipo.fecha,
-        observaciones: equipo.observaciones, // Asegura que las observaciones se incluyan
+        observaciones: equipo.observaciones,
         estados: {
           mantener: equipo.estados.mantener || 0,
           mejorar: equipo.estados.mejorar || 0,
@@ -139,7 +130,7 @@ function InventarioTable({ departamento, user }) {
 
       setDatos((prev) =>
         prev.map((d) =>
-          d.id === id ? { ...d, editado: false, editandoObservacion: false } : d // Resetea editado y editandoObservacion
+          d.id === id ? { ...d, editado: false, editandoObservacion: false } : d
         ).sort((a, b) => (a.sala || "").localeCompare(b.sala || ""))
       );
 
@@ -152,13 +143,11 @@ function InventarioTable({ departamento, user }) {
     }
   };
 
-  // --- Iniciar Proceso de Eliminación (muestra confirmación) ---
   const confirmarEliminar = (id) => {
     if (isDeletingId) return;
     setConfirmarEliminacion(id);
   };
 
-  // --- Eliminar Equipo (con manejo de errores y estado de carga) ---
   const eliminar = async () => {
     if (!confirmarEliminacion) return;
 
@@ -177,7 +166,6 @@ function InventarioTable({ departamento, user }) {
     }
   };
 
-  // --- Calcular Total de Equipos ---
   const calcularTotal = () =>
     datos.reduce(
       (suma, item) =>
@@ -189,7 +177,6 @@ function InventarioTable({ departamento, user }) {
       0
     );
 
-  // --- Obtener Color de Fondo para Inputs de Estado ---
   const getBgColor = (estado) => {
     switch (estado) {
       case "mantener": return "#4CAF50";
@@ -199,7 +186,6 @@ function InventarioTable({ departamento, user }) {
     }
   };
 
-  // --- Filtrar Datos según Input de Búsqueda ---
   const filtrados = datos.filter((item) => {
     const texto = filtro.toLowerCase();
     return (
@@ -210,14 +196,12 @@ function InventarioTable({ departamento, user }) {
     );
   });
 
-  // --- Renderizado del Componente ---
   return (
     <div style={{ width: "100%", marginTop: "2rem", padding: "1rem", overflowX: "auto" }}>
       <h2 style={{ color: "#050576", textAlign: "center", fontSize: "clamp(1.2rem, 3vw, 2rem)" }}>
         {departamento ? t(`departments.${departamento}`) : t('selectDepartment')}
       </h2>
 
-      {/* Barra de Acciones */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center", alignItems: "center", marginBottom: "1rem" }}>
         <button onClick={agregar} style={btnStyle} disabled={isLoading || !departamento}>
           + {t("addEquipment")}
@@ -233,10 +217,8 @@ function InventarioTable({ departamento, user }) {
         />
       </div>
 
-      {/* Indicador de Carga Inicial */}
       {isLoading && <p style={{ textAlign: 'center', margin: '20px', color: '#050576' }}>{t('loadingData')}...</p>}
 
-      {/* Tabla de Inventario */}
       {!isLoading && departamento && (
         <>
           <div style={{ overflowX: "auto" }}>
@@ -257,7 +239,6 @@ function InventarioTable({ departamento, user }) {
 
                   return (
                     <tr key={item.id} style={{ fontSize: "clamp(0.8rem, 1.2vw, 1rem)", opacity: operacionEnCurso ? 0.6 : 1 }}>
-                      {/* Celdas Editables */}
                       {["sala", "tipo", "marca"].map((campo) => (
                         <td key={campo} style={tdStyle}>
                           <input
@@ -269,9 +250,7 @@ function InventarioTable({ departamento, user }) {
                           />
                         </td>
                       ))}
-                      {/* Celda Fecha */}
                       <td style={tdStyle}>{item.fecha}</td>
-                      {/* Celdas Estados */}
                       {["mantener", "mejorar", "reemplazar"].map((estado) => (
                         <td key={estado} style={tdStyle}>
                           <input
@@ -297,7 +276,6 @@ function InventarioTable({ departamento, user }) {
                           />
                         </td>
                       ))}
-                      {/* Celda Observaciones (SIN botón guardar extra) */}
                       <td style={tdStyle}>
                         {item.editandoObservacion ? (
                           <>
@@ -316,7 +294,6 @@ function InventarioTable({ departamento, user }) {
                               }}
                               disabled={operacionEnCurso}
                             />
-                            {/* Botón Guardar eliminado de aquí */}
                           </>
                         ) : (
                           <>
@@ -333,9 +310,7 @@ function InventarioTable({ departamento, user }) {
                           </>
                         )}
                       </td>
-                      {/* Celda Cantidad */}
                       <td style={tdStyle}><strong>{cantidad}</strong></td>
-                      {/* Celda Botón Guardar Principal */}
                       <td style={tdStyle}>
                         <button
                           onClick={() => guardar(item.id)}
@@ -350,7 +325,6 @@ function InventarioTable({ departamento, user }) {
                           {guardandoEsteItem ? t("saving") + "..." : '💾'}
                         </button>
                       </td>
-                      {/* Celda Botón Eliminar */}
                       <td style={tdStyle}>
                         <button
                           onClick={() => confirmarEliminar(item.id)}
@@ -372,7 +346,6 @@ function InventarioTable({ departamento, user }) {
             </table>
           </div>
 
-          {/* Total General y Resumen */}
           <p style={{ textAlign: "right", marginTop: "10px", fontWeight: "bold" }}>
             {t("total")}: {calcularTotal()}
           </p>
@@ -380,7 +353,6 @@ function InventarioTable({ departamento, user }) {
         </>
       )}
 
-      {/* Notificaciones y Confirmación */}
       {notificacion && (
         <FullScreenNotification mensaje={notificacion} cerrar={() => setNotificacion(null)} />
       )}
@@ -396,7 +368,6 @@ function InventarioTable({ departamento, user }) {
   );
 }
 
-// --- Estilos (sin cambios) ---
 const inputEstilo = {
   padding: "6px",
   fontSize: "1rem",
