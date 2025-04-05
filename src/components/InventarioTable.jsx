@@ -289,7 +289,7 @@ function InventarioTable({ departamento, user }) {
                                 padding: "6px",
                                 borderRadius: "6px",
                                 border: "1px solid #ccc",
-                                resize: "vertical",
+                                resize: "none", // <--- Cambio aplicado aquí
                                 fontFamily: "inherit",
                               }}
                               disabled={operacionEnCurso}
