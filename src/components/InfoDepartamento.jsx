@@ -1,4 +1,3 @@
-// InfoDepartamento.jsx
 import { useEffect, useState, useRef } from "react";
 import {
   collection,
@@ -28,7 +27,6 @@ function InfoDepartamento({ departamento, user }) {
   const popupRef = useRef();
   const esAdmin = [
     "computacion@wessexschool.cl",
-    "dilan.aranguiz2201@alumnos.ubiobio.cl",
     "fbotasso@wessexschool.cl",
   ].includes(user?.email);
 
