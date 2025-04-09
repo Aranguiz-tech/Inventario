@@ -23,7 +23,7 @@ function ResumenInventario({ datos }) {
   const [notificacion, setNotificacion] = useState("");
 
   const exportarExcel = () => {
-    const datosLimpios = datos.map(({ id, ...item }) => {
+    const datosLimpios = datos.map(({ id, editado, editandoObservacion, ...item }) => {
       const cantidad = Object.values(item.estados || {}).reduce((a, b) => a + (parseInt(b) || 0), 0);
       return {
         Sala: item.sala,
@@ -47,15 +47,20 @@ function ResumenInventario({ datos }) {
   const exportarImagen = async () => {
     const tabla = document.querySelector("table");
     if (!tabla) return;
-    const canvas = await html2canvas(tabla, {
-      scale: 2,
-      useCORS: true,
-    });
-    const link = document.createElement("a");
-    link.download = "inventario.png";
-    link.href = canvas.toDataURL();
-    link.click();
-    setNotificacion(t("downloadImage") + " ✅");
+    try {
+      const canvas = await html2canvas(tabla, {
+        scale: 2,
+        useCORS: true,
+      });
+      const link = document.createElement("a");
+      link.download = "inventario.png";
+      link.href = canvas.toDataURL();
+      link.click();
+      setNotificacion(t("downloadImage") + " ✅");
+    } catch (error) {
+      console.error("Error al exportar imagen:", error);
+      setNotificacion("Error al exportar imagen ❌");
+    }
   };
 
   const resumenEstados = () => {
@@ -67,26 +72,45 @@ function ResumenInventario({ datos }) {
     });
     return Object.entries(estados)
       .map(([estado, cantidad]) => ({ estado: t(estado), cantidad }))
-      .filter((e) => !isNaN(e.cantidad) && e.cantidad > 0);
+      .filter((e) => e.cantidad > 0);
   };
 
   const resumenTipos = () => {
     const tipos = {};
     datos.forEach((item) => {
-      const tipoTraducido = t(item.tipo || "") || item.tipo || "";
-      const cantidad = Object.values(item.estados || {}).reduce((a, b) => a + (parseInt(b) || 0), 0);
-      tipos[tipoTraducido] = (tipos[tipoTraducido] || 0) + cantidad;
+      if (!item.tipo) return;
+      const tipo = item.tipo.trim();
+      if (!tipo) return;
+      const cantidad = Object.values(item.estados || {}).reduce(
+        (a, b) => a + (parseInt(b) || 0), 0
+      );
+      if (cantidad > 0) {
+        tipos[tipo] = (tipos[tipo] || 0) + cantidad;
+      }
     });
-    return Object.entries(tipos).map(([tipo, cantidad]) => ({ tipo, cantidad }));
+    return Object.entries(tipos)
+      .map(([tipo, cantidad]) => ({ tipo, cantidad }))
+      .sort((a, b) => b.cantidad - a.cantidad);
   };
 
-  const colores = ["#4CAF50", "#FFA726", "#EF5350"];
+  const colores = {
+    mantener: "#4CAF50",
+    mejorar: "#FF9800",
+    reemplazar: "#F44336"
+  };
+
+  const colorArray = [colores.mantener, colores.mejorar, colores.reemplazar];
 
   useEffect(() => {
     if (mostrarResumen && resumenRef.current) {
       resumenRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [mostrarResumen]);
+
+  const calcularAltoGrafica = () => {
+    const tiposData = resumenTipos();
+    return Math.max(300, Math.min(tiposData.length * 50, 600));
+  };
 
   return (
     <div style={{ marginTop: "2rem", padding: "0 1rem" }}>
@@ -137,38 +161,70 @@ function ResumenInventario({ datos }) {
               justifyContent: "center",
               gap: "40px",
               width: "100%",
+              marginBottom: "20px",
             }}
           >
             <div style={{ flex: "1 1 300px", maxWidth: "400px", height: "300px" }}>
               <h4 style={{ textAlign: "center" }}>{t("equipmentByState")}</h4>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={resumenEstados()}
-                    dataKey="cantidad"
-                    nameKey="estado"
-                    outerRadius={100}
-                    label
-                  >
-                    {resumenEstados().map((_, i) => (
-                      <Cell key={i} fill={colores[i]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              {resumenEstados().length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={resumenEstados()}
+                      dataKey="cantidad"
+                      nameKey="estado"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      fill="#8884d8"
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {resumenEstados().map((entry, index) => {
+                        const colorKey = entry.estado.toLowerCase();
+                        return (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={colores[colorKey] || colorArray[index % colorArray.length]}
+                          />
+                        );
+                      })}
+                    </Pie>
+                    <Tooltip formatter={(value) => [value, t("quantity")]} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <p style={{ textAlign: "center", color: "#666" }}>{t("noData")}</p>
+              )}
             </div>
 
-            <div style={{ flex: "1 1 400px", maxWidth: "600px", height: `${Math.max(300, resumenTipos().length * 30)}px` }}>
+            <div style={{ flex: "1 1 400px", maxWidth: "600px", height: `${calcularAltoGrafica()}px` }}>
               <h4 style={{ textAlign: "center" }}>{t("equipmentByType")}</h4>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={resumenTipos()} layout="vertical" margin={{ left: 40 }}>
-                  <XAxis type="number" />
-                  <YAxis type="category" dataKey="tipo" width={120} />
-                  <Tooltip />
-                  <Bar dataKey="cantidad" fill="#050576" barSize={24} />
-                </BarChart>
-              </ResponsiveContainer>
+              {resumenTipos().length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={resumenTipos()}
+                    layout="vertical"
+                    margin={{ left: 100, right: 20, top: 10, bottom: 10 }}
+                  >
+                    <XAxis type="number" />
+                    <YAxis
+                      type="category"
+                      dataKey="tipo"
+                      width={90}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <Tooltip formatter={(value) => [value, t("quantity")]} />
+                    <Bar
+                      dataKey="cantidad"
+                      fill="#050576"
+                      barSize={24}
+                      radius={[0, 4, 4, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <p style={{ textAlign: "center", color: "#666" }}>{t("noData")}</p>
+              )}
             </div>
           </div>
         </div>
@@ -191,6 +247,7 @@ const boton = {
   fontSize: "clamp(0.9rem, 1.2vw, 1rem)",
   fontFamily: "Segoe UI, Tahoma, sans-serif",
   flex: "1 1 auto",
+  transition: "background-color 0.3s",
 };
 
 export default ResumenInventario;
