@@ -1,3 +1,4 @@
+// FullScreenNotification.jsx
 import React, { useEffect, useRef } from "react";
 
 function FullScreenNotification({
@@ -36,11 +37,7 @@ function FullScreenNotification({
   return (
     <div style={fondo} onClick={handleFondoClick}>
       <div style={caja} onClick={(e) => e.stopPropagation()}>
-        {typeof mensaje === "string" ? (
-          <p style={texto}>{mensaje}</p>
-        ) : (
-          mensaje
-        )}
+        {typeof mensaje === "string" ? <p style={texto}>{mensaje}</p> : mensaje}
         {esConfirmacion && (
           <div style={botones}>
             <button

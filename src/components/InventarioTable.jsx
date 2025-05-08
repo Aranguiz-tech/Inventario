@@ -25,6 +25,9 @@ function InventarioTable({ departamento, user }) {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevaSala, setNuevaSala] = useState("");
   const [mostrarResumen, setMostrarResumen] = useState(false);
+  const [salaAEliminar, setSalaAEliminar] = useState(null);
+  const [equipoAEliminar, setEquipoAEliminar] = useState(null);
+
   const ruta = collection(db, "departamentos", departamento, "equipos");
 
   useEffect(() => {
@@ -63,6 +66,25 @@ function InventarioTable({ departamento, user }) {
     setMostrarModal(false);
   };
 
+  const confirmarEliminarSala = async () => {
+    const equiposEnSala = datos.filter((d) => d.sala === salaAEliminar);
+    for (const equipo of equiposEnSala) {
+      await deleteDoc(doc(db, "departamentos", departamento, "equipos", equipo.id));
+    }
+    setDatos(datos.filter((d) => d.sala !== salaAEliminar));
+    setSalas(salas.filter((s) => s !== salaAEliminar));
+    setSalaAEliminar(null);
+    setNotificacion(t("deleted"));
+  };
+
+  const confirmarEliminarEquipo = async () => {
+    if (!equipoAEliminar) return;
+    await deleteDoc(doc(db, "departamentos", departamento, "equipos", equipoAEliminar));
+    setDatos(datos.filter((d) => d.id !== equipoAEliminar));
+    setEquipoAEliminar(null);
+    setNotificacion(t("deleted"));
+  };
+
   const agregarEquipo = async (sala) => {
     const nuevo = {
       sala,
@@ -81,14 +103,6 @@ function InventarioTable({ departamento, user }) {
     await updateDoc(doc(db, "departamentos", departamento, "equipos", id), item);
     setDatos((prev) => prev.map((d) => (d.id === id ? { ...d, editado: false } : d)));
     setNotificacion(t("saved"));
-  };
-
-  const eliminar = async (id) => {
-    const item = datos.find((d) => d.id === id);
-    if (!item) return;
-    await deleteDoc(doc(db, "departamentos", departamento, "equipos", id));
-    setDatos(datos.filter((d) => d.id !== id));
-    setNotificacion(t("deleted"));
   };
 
   const setEstado = (id, estado) => {
@@ -154,7 +168,7 @@ function InventarioTable({ departamento, user }) {
       <h2 style={{ color: "#050576", textAlign: "center" }}>{t("summary")}</h2>
 
       <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap" }}>
-        <button onClick={agregarSala} style={btn}>➕ {t("addRoom")}</button>
+        <button onClick={agregarSala} style={btn}>➕ {t("addEquipment")}</button>
         <button onClick={() => setMostrarResumen(!mostrarResumen)} style={btn}>
           {mostrarResumen ? t("hideMetrics") : t("showMetrics")} 📊
         </button>
@@ -168,12 +182,10 @@ function InventarioTable({ departamento, user }) {
               <h3>{sala}</h3>
               <div style={{ display: "flex", gap: "10px" }}>
                 <InfoDepartamento departamento={sala} user={user} />
-                <button
-                  onClick={() => setExpandido((prev) => ({ ...prev, [sala]: !prev[sala] }))}
-                  style={btnToggle}
-                >
-                  {expandido[sala] ? "◀️" : "▶️"}
+                <button onClick={() => setExpandido((prev) => ({ ...prev, [sala]: !prev[sala] }))} style={btnToggle}>
+                  {expandido[sala] ? "🔼" : "🔽"}
                 </button>
+                <button onClick={() => setSalaAEliminar(sala)} style={btnBorrar}>🗑️</button>
               </div>
             </div>
             {expandido[sala] && (
@@ -183,22 +195,14 @@ function InventarioTable({ departamento, user }) {
                     <input
                       disabled={!item.editado}
                       value={item.tipo}
-                      onChange={(e) =>
-                        setDatos((prev) =>
-                          prev.map((d) => (d.id === item.id ? { ...d, tipo: e.target.value } : d))
-                        )
-                      }
+                      onChange={(e) => setDatos((prev) => prev.map((d) => (d.id === item.id ? { ...d, tipo: e.target.value } : d)))}
                       placeholder={t("type")}
                       style={input}
                     />
                     <input
                       disabled={!item.editado}
                       value={item.marca}
-                      onChange={(e) =>
-                        setDatos((prev) =>
-                          prev.map((d) => (d.id === item.id ? { ...d, marca: e.target.value } : d))
-                        )
-                      }
+                      onChange={(e) => setDatos((prev) => prev.map((d) => (d.id === item.id ? { ...d, marca: e.target.value } : d)))}
                       placeholder={t("brand")}
                       style={input}
                     />
@@ -207,10 +211,7 @@ function InventarioTable({ departamento, user }) {
                         <button
                           key={estado}
                           onClick={() => setEstado(item.id, estado)}
-                          style={{
-                            ...btnEstado,
-                            backgroundColor: item.estados[estado] === 1 ? colores[estado] : "#ccc",
-                          }}
+                          style={{ ...btnEstado, backgroundColor: item.estados[estado] === 1 ? colores[estado] : "#ccc" }}
                           disabled={!item.editado}
                         >
                           {t(estado)}
@@ -220,18 +221,12 @@ function InventarioTable({ departamento, user }) {
                     <textarea
                       disabled={!item.editado}
                       value={item.observaciones}
-                      onChange={(e) =>
-                        setDatos((prev) =>
-                          prev.map((d) =>
-                            d.id === item.id ? { ...d, observaciones: e.target.value } : d
-                          )
-                        )
-                      }
+                      onChange={(e) => setDatos((prev) => prev.map((d) => (d.id === item.id ? { ...d, observaciones: e.target.value } : d)))}
                       placeholder={t("notes")}
                       style={input}
                     />
                     <button onClick={() => guardar(item.id)} style={btn}>💾</button>
-                    <button onClick={() => eliminar(item.id)} style={btnBorrar}>🗑️</button>
+                    <button onClick={() => setEquipoAEliminar(item.id)} style={btnBorrar}>🗑️</button>
                   </div>
                 ))}
                 <button onClick={() => agregarEquipo(sala)} style={{ ...btn, marginTop: "10px" }}>
@@ -253,28 +248,41 @@ function InventarioTable({ departamento, user }) {
       {mostrarResumen && <ResumenInventario datos={datos} />}
 
       {mostrarModal && (
-        <FullScreenNotification
-          mensaje={
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <p style={{ fontSize: "1.1rem" }}>{t("Nombre de la nueva sala:")}</p>
-              <input
-                value={nuevaSala}
-                onChange={(e) => setNuevaSala(e.target.value)}
-                style={{
-                  padding: "10px",
-                  fontSize: "1rem",
-                  border: "1px solid #ccc",
-                  borderRadius: "6px",
-                }}
-              />
-              <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
-                <button style={btn} onClick={confirmarAgregarSala}>{t("addRoom")}</button>
-                <button style={btnBorrar} onClick={() => setMostrarModal(false)}>{t("cancel")}</button>
-              </div>
+        <FullScreenNotification autodestructiva={false} cerrar={() => setMostrarModal(false)} mensaje={
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <p style={{ fontSize: "1.1rem" }}>{t("Nombre de la nueva sala:")}</p>
+            <input
+              value={nuevaSala}
+              onChange={(e) => setNuevaSala(e.target.value)}
+              style={{ padding: "10px", fontSize: "1rem", border: "1px solid #ccc", borderRadius: "6px" }}
+            />
+            <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
+              <button style={btn} onClick={confirmarAgregarSala}>{t("addEquipment")}</button>
+              <button style={btnBorrar} onClick={() => setMostrarModal(false)}>{t("cancel")}</button>
             </div>
-          }
-          cerrar={() => setMostrarModal(false)}
-          autodestructiva={false} // importante: no se cierra solo
+          </div>
+        } />
+      )}
+
+      {salaAEliminar && (
+        <FullScreenNotification
+          mensaje={t("¿Seguro que deseas eliminar esta sala y todos sus equipos?")}
+          cerrar={() => setSalaAEliminar(null)}
+          confirmar={confirmarEliminarSala}
+          cancelar={() => setSalaAEliminar(null)}
+          esConfirmacion={true}
+          autodestructiva={false}
+        />
+      )}
+
+      {equipoAEliminar && (
+        <FullScreenNotification
+          mensaje={t("¿Seguro que deseas eliminar este equipo?")}
+          cerrar={() => setEquipoAEliminar(null)}
+          confirmar={confirmarEliminarEquipo}
+          cancelar={() => setEquipoAEliminar(null)}
+          esConfirmacion={true}
+          autodestructiva={false}
         />
       )}
 
