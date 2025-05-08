@@ -22,9 +22,9 @@ function InventarioTable({ departamento, user }) {
   const [datos, setDatos] = useState([]);
   const [notificacion, setNotificacion] = useState(null);
   const [expandido, setExpandido] = useState({});
-  const [mostrarModal, setMostrarModal] = useState(false);
-  const [nuevaSala, setNuevaSala] = useState("");
   const [mostrarResumen, setMostrarResumen] = useState(false);
+  const [mostrarModalSala, setMostrarModalSala] = useState(false);
+  const [nuevaSalaNombre, setNuevaSalaNombre] = useState("");
   const [salaAEliminar, setSalaAEliminar] = useState(null);
   const [equipoAEliminar, setEquipoAEliminar] = useState(null);
 
@@ -55,15 +55,16 @@ function InventarioTable({ departamento, user }) {
     cargarDatos();
   }, [departamento]);
 
-  const agregarSala = () => setMostrarModal(true);
+  const agregarSala = () => setMostrarModalSala(true);
 
   const confirmarAgregarSala = () => {
-    if (nuevaSala.trim() && !salas.includes(nuevaSala.trim())) {
-      setSalas([...salas, nuevaSala.trim()]);
-      setNotificacion(`${t("Sala")} "${nuevaSala}" ${t("agregada correctamente")} ✅`);
+    const nombre = nuevaSalaNombre.trim();
+    if (nombre && !salas.includes(nombre)) {
+      setSalas([...salas, nombre]);
+      setNotificacion(t("saved"));
     }
-    setNuevaSala("");
-    setMostrarModal(false);
+    setNuevaSalaNombre("");
+    setMostrarModalSala(false);
   };
 
   const confirmarEliminarSala = async () => {
@@ -168,7 +169,9 @@ function InventarioTable({ departamento, user }) {
       <h2 style={{ color: "#050576", textAlign: "center" }}>{t("summary")}</h2>
 
       <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap" }}>
-        <button onClick={agregarSala} style={btn}>➕ {t("addEquipment")}</button>
+        <button onClick={agregarSala} style={btn}>➕ {t("addRoom")}</button>
+        <button onClick={exportarExcel} style={btn}>{t("exportExcel")} 📁</button>
+        <button onClick={exportarImagen} style={btn}>{t("downloadImage")} 🖼️</button>
         <button onClick={() => setMostrarResumen(!mostrarResumen)} style={btn}>
           {mostrarResumen ? t("hideMetrics") : t("showMetrics")} 📊
         </button>
@@ -238,27 +241,18 @@ function InventarioTable({ departamento, user }) {
         );
       })}
 
-      {salas.length > 0 && (
-        <div style={{ textAlign: "center", marginTop: "30px", gap: "20px", display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
-          <button onClick={exportarExcel} style={btn}>{t("exportExcel")} 📁</button>
-          <button onClick={exportarImagen} style={btn}>{t("downloadImage")} 🖼️</button>
-        </div>
-      )}
-
-      {mostrarResumen && <ResumenInventario datos={datos} />}
-
-      {mostrarModal && (
-        <FullScreenNotification autodestructiva={false} cerrar={() => setMostrarModal(false)} mensaje={
+      {mostrarModalSala && (
+        <FullScreenNotification autodestructiva={false} cerrar={() => setMostrarModalSala(false)} mensaje={
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <p style={{ fontSize: "1.1rem" }}>{t("Nombre de la nueva sala:")}</p>
             <input
-              value={nuevaSala}
-              onChange={(e) => setNuevaSala(e.target.value)}
+              value={nuevaSalaNombre}
+              onChange={(e) => setNuevaSalaNombre(e.target.value)}
               style={{ padding: "10px", fontSize: "1rem", border: "1px solid #ccc", borderRadius: "6px" }}
             />
             <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
-              <button style={btn} onClick={confirmarAgregarSala}>{t("addEquipment")}</button>
-              <button style={btnBorrar} onClick={() => setMostrarModal(false)}>{t("cancel")}</button>
+              <button style={btn} onClick={confirmarAgregarSala}>{t("addRoom")}</button>
+              <button style={btnBorrar} onClick={() => setMostrarModalSala(false)}>{t("cancel")}</button>
             </div>
           </div>
         } />
@@ -289,6 +283,8 @@ function InventarioTable({ departamento, user }) {
       {notificacion && (
         <FullScreenNotification mensaje={notificacion} cerrar={() => setNotificacion(null)} />
       )}
+
+      {mostrarResumen && <ResumenInventario datos={datos} />}
     </div>
   );
 }
