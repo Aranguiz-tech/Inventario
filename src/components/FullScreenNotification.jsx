@@ -24,7 +24,7 @@ function FullScreenNotification({
         confirmarRef.current?.focus();
       }, 100);
     } else if (autodestructiva) {
-      const timeout = setTimeout(cerrar, 500); // 500ms para mensajes informativos
+      const timeout = setTimeout(cerrar, 500);
       return () => clearTimeout(timeout);
     }
   }, [esConfirmacion, autodestructiva, cerrar]);

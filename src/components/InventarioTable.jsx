@@ -104,10 +104,7 @@ function InventarioTable({ departamento, user }) {
 
   const exportarExcel = () => {
     const datosLimpios = datos.map(({ id, editado, ...rest }) => {
-      const cantidad = Object.values(rest.estados || {}).reduce(
-        (a, b) => a + (parseInt(b) || 0),
-        0
-      );
+      const cantidad = Object.values(rest.estados || {}).reduce((a, b) => a + (parseInt(b) || 0), 0);
       return {
         [t("total")]: cantidad,
         [t("type")]: rest.tipo,
@@ -157,7 +154,7 @@ function InventarioTable({ departamento, user }) {
       <h2 style={{ color: "#050576", textAlign: "center" }}>{t("summary")}</h2>
 
       <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap" }}>
-        <button onClick={agregarSala} style={btn}>➕ {t("addEquipment")}</button>
+        <button onClick={agregarSala} style={btn}>➕ {t("addRoom")}</button>
         <button onClick={() => setMostrarResumen(!mostrarResumen)} style={btn}>
           {mostrarResumen ? t("hideMetrics") : t("showMetrics")} 📊
         </button>
@@ -271,12 +268,13 @@ function InventarioTable({ departamento, user }) {
                 }}
               />
               <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
-                <button style={btn} onClick={confirmarAgregarSala}>{t("addEquipment")}</button>
+                <button style={btn} onClick={confirmarAgregarSala}>{t("addRoom")}</button>
                 <button style={btnBorrar} onClick={() => setMostrarModal(false)}>{t("cancel")}</button>
               </div>
             </div>
           }
           cerrar={() => setMostrarModal(false)}
+          autodestructiva={false} // importante: no se cierra solo
         />
       )}
 
