@@ -6,6 +6,7 @@ function FullScreenNotification({
   confirmar,
   cancelar,
   esConfirmacion = false,
+  autodestructiva = true,
 }) {
   const confirmarRef = useRef(null);
 
@@ -18,24 +19,28 @@ function FullScreenNotification({
   }, [cerrar]);
 
   useEffect(() => {
-    if (!esConfirmacion) {
-      const timeout = setTimeout(cerrar, 500);
-      return () => clearTimeout(timeout);
-    } else {
+    if (esConfirmacion) {
       setTimeout(() => {
         confirmarRef.current?.focus();
       }, 100);
+    } else if (autodestructiva) {
+      const timeout = setTimeout(cerrar, 500); // 500ms para mensajes informativos
+      return () => clearTimeout(timeout);
     }
-  }, [cerrar, esConfirmacion]);
+  }, [esConfirmacion, autodestructiva, cerrar]);
 
   const handleFondoClick = () => {
-    if (!esConfirmacion) cerrar();
+    if (!esConfirmacion && autodestructiva) cerrar();
   };
 
   return (
     <div style={fondo} onClick={handleFondoClick}>
       <div style={caja} onClick={(e) => e.stopPropagation()}>
-        <p style={texto}>{mensaje}</p>
+        {typeof mensaje === "string" ? (
+          <p style={texto}>{mensaje}</p>
+        ) : (
+          mensaje
+        )}
         {esConfirmacion && (
           <div style={botones}>
             <button
