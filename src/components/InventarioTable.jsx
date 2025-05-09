@@ -7,6 +7,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "../firebase-config";
 import FullScreenNotification from "./FullScreenNotification";
@@ -28,13 +29,11 @@ function InventarioTable({ departamento, user }) {
   const [salaAEliminar, setSalaAEliminar] = useState(null);
   const [equipoAEliminar, setEquipoAEliminar] = useState(null);
 
-  const ruta = collection(db, "departamentos", departamento, "equipos");
-
   useEffect(() => {
     if (!departamento) return;
     const cargarDatos = async () => {
-      const snap = await getDocs(ruta);
-      const equipos = snap.docs.map((doc) => {
+      const snapEquipos = await getDocs(collection(db, "departamentos", departamento, "equipos"));
+      const equipos = snapEquipos.docs.map((doc) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -48,19 +47,27 @@ function InventarioTable({ departamento, user }) {
         };
       });
       setDatos(equipos);
-      const unicas = [...new Set(equipos.map((e) => e.sala || ""))].filter(Boolean);
-      setSalas(unicas);
+
+      const snapSalas = await getDocs(collection(db, "departamentos", departamento, "salas"));
+      const nombresSalas = snapSalas.docs.map((doc) => doc.id);
+      setSalas(nombresSalas.sort((a, b) => a.localeCompare(b)));
+
       setMostrarResumen(false);
     };
     cargarDatos();
   }, [departamento]);
 
+  const editar = (id) => {
+    setDatos((prev) => prev.map((d) => (d.id === id ? { ...d, editado: true } : d)));
+  };
+
   const agregarSala = () => setMostrarModalSala(true);
 
-  const confirmarAgregarSala = () => {
+  const confirmarAgregarSala = async () => {
     const nombre = nuevaSalaNombre.trim();
     if (nombre && !salas.includes(nombre)) {
-      setSalas([...salas, nombre]);
+      await setDoc(doc(db, "departamentos", departamento, "salas", nombre), { nombre });
+      setSalas([...salas, nombre].sort((a, b) => a.localeCompare(b)));
       setNotificacion(t("saved"));
     }
     setNuevaSalaNombre("");
@@ -72,6 +79,7 @@ function InventarioTable({ departamento, user }) {
     for (const equipo of equiposEnSala) {
       await deleteDoc(doc(db, "departamentos", departamento, "equipos", equipo.id));
     }
+    await deleteDoc(doc(db, "departamentos", departamento, "salas", salaAEliminar));
     setDatos(datos.filter((d) => d.sala !== salaAEliminar));
     setSalas(salas.filter((s) => s !== salaAEliminar));
     setSalaAEliminar(null);
@@ -94,7 +102,7 @@ function InventarioTable({ departamento, user }) {
       observaciones: "",
       estados: { mantener: 0, mejorar: 0, reemplazar: 0 },
     };
-    const ref = await addDoc(ruta, nuevo);
+    const ref = await addDoc(collection(db, "departamentos", departamento, "equipos"), nuevo);
     setDatos([...datos, { ...nuevo, id: ref.id, editado: true }]);
   };
 
@@ -178,7 +186,7 @@ function InventarioTable({ departamento, user }) {
       </div>
 
       {salas.map((sala) => {
-        const items = datos.filter((d) => d.sala === sala);
+        const items = datos.filter((d) => d.sala === sala).sort((a, b) => a.tipo.localeCompare(b.tipo));
         return (
           <div key={sala} style={bloqueSala} data-sala={sala}>
             <div style={cabeceraSala}>
@@ -228,7 +236,11 @@ function InventarioTable({ departamento, user }) {
                       placeholder={t("notes")}
                       style={input}
                     />
-                    <button onClick={() => guardar(item.id)} style={btn}>💾</button>
+                    {!item.editado ? (
+                      <button onClick={() => editar(item.id)} style={btn}>✏️</button>
+                    ) : (
+                      <button onClick={() => guardar(item.id)} style={btn}>💾</button>
+                    )}
                     <button onClick={() => setEquipoAEliminar(item.id)} style={btnBorrar}>🗑️</button>
                   </div>
                 ))}
@@ -240,6 +252,8 @@ function InventarioTable({ departamento, user }) {
           </div>
         );
       })}
+
+      {mostrarResumen && <ResumenInventario datos={datos} />}
 
       {mostrarModalSala && (
         <FullScreenNotification autodestructiva={false} cerrar={() => setMostrarModalSala(false)} mensaje={
@@ -283,8 +297,6 @@ function InventarioTable({ departamento, user }) {
       {notificacion && (
         <FullScreenNotification mensaje={notificacion} cerrar={() => setNotificacion(null)} />
       )}
-
-      {mostrarResumen && <ResumenInventario datos={datos} />}
     </div>
   );
 }

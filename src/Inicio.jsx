@@ -5,16 +5,23 @@ import { auth, db } from "./firebase-config";
 import InventarioTable from "./components/InventarioTable";
 import FullScreenNotification from "./components/FullScreenNotification";
 import LanguageSwitcher from "./components/LanguageSwitcher";
+import EditarDepartamentos from "./components/editarDepartamentos";
 import logo from "./assets/logo.png";
 import { useTranslation } from "react-i18next";
 import i18n from "./i18n";
 
 function Inicio({ user, cerrarSesion }) {
+  const { t } = useTranslation();
   const [departamentos, setDepartamentos] = useState([]);
   const [depSeleccionado, setDepSeleccionado] = useState(null);
   const [departamentoCargado, setDepartamentoCargado] = useState(false);
+  const [mostrarEdicion, setMostrarEdicion] = useState(false);
   const [notificacion, setNotificacion] = useState("");
-  const { t } = useTranslation();
+
+  const esAdmin = [
+    "computacion@wessexschool.cl",
+    "fbotasso@wessexschool.cl",
+  ].includes(user?.email);
 
   useEffect(() => {
     const cargarDepartamentos = async () => {
@@ -23,8 +30,8 @@ function Inicio({ user, cerrarSesion }) {
         const data = doc.data();
         return {
           id: doc.id,
-          nombre_es: data.nombre_es,
-          nombre_en: data.nombre_en,
+          nombre_es: data.nombre_es || doc.id,
+          nombre_en: data.nombre_en || doc.id,
         };
       });
 
@@ -51,7 +58,7 @@ function Inicio({ user, cerrarSesion }) {
       await signOut(auth);
       cerrarSesion();
     } catch {
-      setNotificacion("Error al cerrar sesión");
+      setNotificacion("❌ " + t("errorClosingSession"));
     }
   };
 
@@ -86,9 +93,9 @@ function Inicio({ user, cerrarSesion }) {
           padding: "3vw",
         }}
       >
+        {/* CABECERA */}
         <div
           style={{
-            width: "100%",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -106,19 +113,31 @@ function Inicio({ user, cerrarSesion }) {
               objectFit: "contain",
             }}
           />
-          <div style={{ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" }}>
-            <h4
-              style={{
-                margin: 0,
-                color: "#050576",
-                fontSize: "clamp(1rem, 2.5vw, 1.2rem)",
-                fontWeight: "500",
-              }}
-            >
+
+          <div style={{ display: "flex", alignItems: "center", gap: "15px", flexWrap: "wrap" }}>
+            <h4 style={{ margin: 0, color: "#050576", fontSize: "1.1rem" }}>
               {t("greeting")}, {user.displayName}
             </h4>
 
             <LanguageSwitcher />
+
+            {esAdmin && (
+              <button
+                title={t("editDepartments")}
+                onClick={() => setMostrarEdicion(!mostrarEdicion)}
+                style={{
+                  padding: "10px",
+                  backgroundColor: "#050576",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "50%",
+                  fontSize: "1.2rem",
+                  cursor: "pointer",
+                }}
+              >
+                ⚙️
+              </button>
+            )}
 
             <button
               onClick={cerrar}
@@ -128,7 +147,7 @@ function Inicio({ user, cerrarSesion }) {
                 color: "white",
                 border: "none",
                 borderRadius: "5px",
-                fontSize: "clamp(1rem, 2.5vw, 1.2rem)",
+                fontSize: "1rem",
                 cursor: "pointer",
               }}
             >
@@ -137,6 +156,12 @@ function Inicio({ user, cerrarSesion }) {
           </div>
         </div>
 
+        {/* PANEL DE EDICIÓN DEPARTAMENTOS */}
+ {esAdmin && mostrarEdicion && (
+  <EditarDepartamentos user={user} cerrar={() => setMostrarEdicion(false)} />
+)}
+
+        {/* SELECCIÓN DE DEPARTAMENTO */}
         <h1
           style={{
             color: "#050576",
@@ -154,7 +179,6 @@ function Inicio({ user, cerrarSesion }) {
             flexWrap: "wrap",
             gap: "1rem",
             justifyContent: "center",
-            width: "100%",
             maxWidth: "1100px",
             marginBottom: "5vh",
           }}
@@ -193,6 +217,7 @@ function Inicio({ user, cerrarSesion }) {
           ))}
         </div>
 
+        {/* TABLA DEL INVENTARIO */}
         {departamentoCargado && depSeleccionado && (
           <InventarioTable departamento={depSeleccionado} user={user} />
         )}
